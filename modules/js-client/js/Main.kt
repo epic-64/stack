@@ -7,6 +7,8 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.w3c.dom.*
 import org.w3c.dom.events.KeyboardEvent
+import org.w3c.fetch.RequestInit
+import kotlin.js.json
 
 private const val API_BASE = "http://localhost:8080/api/todos"
 
@@ -71,7 +73,7 @@ fun main() {
                 // id may be null if not persisted; guard
                 val id = todo.id
                 if (id != null) {
-                    deleteTodo(id.toLong()) { refresh() }
+                    deleteTodo(id) { refresh() }
                 }
             }
 
@@ -156,23 +158,24 @@ private fun fetchTodos(done: (List<Todo>) -> Unit) {
 
 private fun createTodo(title: String, done: () -> Unit) {
     val body = Json.encodeToString(CreateTodoRequest(title = title))
-    window.fetch(
-        API_BASE,
-        js("({method:'POST', headers:{'Content-Type':'application/json'}, body: body})")
-    ).then { done() }
+    val request = RequestInit(
+        method = "POST",
+        headers = json("Content-Type" to "application/json"),
+        body = body
+    )
+    window.fetch(API_BASE, request).then { done() }
 }
 
 private fun toggleTodo(todo: Todo, done: () -> Unit) {
     val body = Json.encodeToString(UpdateTodoRequest(completed = !todo.completed))
-    window.fetch(
-        "${API_BASE}/${todo.id}",
-        js("({method:'PATCH', headers:{'Content-Type':'application/json'}, body: body})")
-    ).then { done() }
+    val request = RequestInit(
+        method = "PATCH",
+        headers = json("Content-Type" to "application/json"),
+        body = body
+    )
+    window.fetch("${API_BASE}/${todo.id}", request).then { done() }
 }
 
 private fun deleteTodo(id: Long, done: () -> Unit) {
-    window.fetch(
-        "${API_BASE}/$id",
-        js("({method:'DELETE'})")
-    ).then { done() }
+    window.fetch("${API_BASE}/$id", RequestInit(method = "DELETE")).then { done() }
 }
