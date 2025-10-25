@@ -24,6 +24,13 @@ kotlin {
                 implementation(libs.kotlinxSerialization)
             }
         }
+        // Map tests to the existing 'test' directory and add kotlin test library.
+        val jsTest by getting {
+            kotlin.srcDirs("test")
+            dependencies {
+                implementation(kotlin("test"))
+            }
+        }
     }
 }
 
