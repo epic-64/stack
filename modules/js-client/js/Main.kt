@@ -175,7 +175,7 @@ private fun fetchTodos(done: (List<Todo>) -> Unit) {
                 val root = (document.getElementById("app") ?: document.body!!) as HTMLElement
                 logout(root)
                 null
-            } else if (!resp.ok) throw Throwable("HTTP ${'$'}{resp.status}") else resp.text()
+            } else if (!resp.ok) throw Throwable("HTTP ${resp.status}") else resp.text()
         }
         .then { anyText ->
             if (anyText != null) {

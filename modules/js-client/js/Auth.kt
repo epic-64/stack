@@ -153,10 +153,10 @@ private fun doRegister(username: String, password: String, onAuthenticated: (Use
             if (resp.status == 201.toShort()) {
                 doLogin(username, password, onAuthenticated, onError)
             } else {
-                resp.text().then { txt -> onError("Register failed: ${'$'}{resp.status} ${'$'}txt") }
+                resp.text().then { txt -> onError("Register failed: ${resp.status} $txt") }
             }
         }
-        .catch { err -> onError("Register failed: ${'$'}err") }
+        .catch { err -> onError("Register failed: $err") }
 }
 
 private fun fetchMe(ok: (User) -> Unit, unauthorized: () -> Unit, failure: (Throwable) -> Unit = {}) {
@@ -164,7 +164,7 @@ private fun fetchMe(ok: (User) -> Unit, unauthorized: () -> Unit, failure: (Thro
         .then { resp ->
             when {
                 resp.status == 401.toShort() -> { unauthorized(); null }
-                !resp.ok -> throw Throwable("/me failed: ${'$'}{resp.status}")
+                !resp.ok -> throw Throwable("/me failed: ${resp.status}")
                 else -> resp.text().then { text ->
                     try {
                         ok(Json.decodeFromString(text))
