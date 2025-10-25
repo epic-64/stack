@@ -10,4 +10,7 @@ Excluded files, by company policy - do not try to open or modify them:
 We are on a local dev environment.
 Run gradlew in daemon mode by default to improve performance.
 
+In frontend kotlin code, there is a 100% chance if you type `${'$'}`, it's bullshit.
+Never do that.
+
 With that out of the way, have fun coding!
