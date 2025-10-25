@@ -16,3 +16,14 @@ dependencies {
 }
 
 // Spring Boot creates a bootJar by default. No special configuration needed for this simple module.
+
+// Ensure the development profile (file-based H2) is active when running the app via bootRun.
+// The test tasks explicitly use the in-memory profile for isolation and speed.
+tasks.withType<org.springframework.boot.gradle.tasks.run.BootRun> {
+    systemProperty("spring.profiles.active", "dev")
+}
+
+tasks.withType<Test> {
+    // Use the in-memory DB defined in application-test.properties
+    systemProperty("spring.profiles.active", "test")
+}

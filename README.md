@@ -74,3 +74,26 @@ How to build the JS bundle:
 Open the frontend:
 - Open `frontend/index.html` in your browser (double-click it or serve the folder via any static HTTP server).
 - You should see the text replaced to: `Hello from Kotlin/JS!`.
+
+## Development vs Test Database Profiles
+
+The `hello-server` module now uses two Spring profiles for database configuration:
+
+- `dev` (default when running via `bootRun`): File-based H2 located under `./data/` so data persists across restarts.
+  - URL: `jdbc:h2:file:./data/todosdb;AUTO_SERVER=TRUE;LOCK_TIMEOUT=10000`
+  - Files (ignored by Git): `data/todosdb.mv.db` (or `.h2.db` depending on H2 version)
+- `test` (activated for Gradle test tasks): In-memory H2 that is recreated for each test run.
+  - URL: `jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE`
+
+How it works:
+- Gradle `bootRun` task: system property `spring.profiles.active=dev` is set in the subproject build script.
+- Gradle `Test` tasks: system property `spring.profiles.active=test` ensures isolation and fast tests.
+- Individual tests that need to be explicit can use `@ActiveProfiles("test")`.
+
+If you package and run the JAR manually (not via `bootRun`), pass `-Dspring.profiles.active=dev` (or `test`) to choose a profile, e.g.:
+
+```
+java -Dspring.profiles.active=dev -jar modules/hello-server/build/libs/hello-server-<version>.jar
+```
+
+Switching to a different persistent database (e.g. PostgreSQL) later would involve creating another profile (e.g. `prod`) with its own datasource properties.
