@@ -7,4 +7,7 @@ Leave the coding style alone. Leave comments alone. Leave formatting alone.
 Excluded files, by company policy - do not try to open or modify them:
 - application.properties
 
+We are on a local dev environment.
+Run gradlew in daemon mode by default to improve performance.
+
 With that out of the way, have fun coding!
