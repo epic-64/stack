@@ -22,4 +22,8 @@ plugins {
 include(":app")
 include(":utils")
 
+// Map logical project names to their new physical locations under the `modules/` directory.
+project(":app").projectDir = file("modules/app")
+project(":utils").projectDir = file("modules/utils")
+
 rootProject.name = "stack2"
