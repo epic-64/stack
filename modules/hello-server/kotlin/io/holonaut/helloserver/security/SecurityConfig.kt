@@ -11,6 +11,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.web.cors.CorsConfiguration
+import org.springframework.web.cors.CorsConfigurationSource
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 
 @Configuration
 class SecurityConfig(
@@ -27,9 +30,24 @@ class SecurityConfig(
     }
 
     @Bean
+    fun corsConfigurationSource(): CorsConfigurationSource {
+        val configuration = CorsConfiguration()
+        configuration.allowedOriginPatterns = listOf("*")
+        configuration.allowedMethods = listOf("*")
+        configuration.allowedHeaders = listOf("*")
+        configuration.exposedHeaders = listOf("*")
+        configuration.allowCredentials = false
+        configuration.maxAge = 3600
+        val source = UrlBasedCorsConfigurationSource()
+        source.registerCorsConfiguration("/**", configuration)
+        return source
+    }
+
+    @Bean
     fun filterChain(http: HttpSecurity): SecurityFilterChain {
         http
             .csrf { it.disable() }
+            .cors { } // enable CORS using the above configuration
             .authorizeHttpRequests { auth ->
                 auth
                     .requestMatchers("/api/auth/register").permitAll()
@@ -49,4 +67,3 @@ class AppUserDetails(val user: io.holonaut.helloserver.user.UserEntity) : UserDe
     override fun isCredentialsNonExpired() = true
     override fun isEnabled() = true
 }
-
