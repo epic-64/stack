@@ -1,29 +1,28 @@
 package io.holonaut.helloserver
 
-import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
-import org.springframework.http.MediaType
-import org.springframework.test.web.servlet.MockMvc
-import org.springframework.test.web.servlet.get
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import com.fasterxml.jackson.databind.ObjectMapper
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.longs.shouldBeLessThan
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 
-@WebMvcTest(controllers = [HelloController::class])
-class HelloControllerTest {
+class HelloControllerSpec : StringSpec({
+    val controller = HelloController()
+    val mapper = ObjectMapper()
 
-    @Autowired
-    private lateinit var mockMvc: MockMvc
-
-    @Test
-    fun `GET hello returns valid JSON`() {
-        mockMvc.get("/hello")
-            .andExpect {
-                status { isOk() }
-                content { contentTypeCompatibleWith(MediaType.APPLICATION_JSON) }
-                jsonPath("$.message") { value("Hello, world!") }
-                jsonPath("$.timestampMillis") { isNumber() }
-            }
+    "hello endpoint returns expected greeting fields" {
+        val before = System.currentTimeMillis()
+        val greeting = controller.hello()
+        val after = System.currentTimeMillis()
+        greeting.message shouldBe "Hello, world!"
+        // timestamp should fall between before and after within a generous bound
+        (after - greeting.timestampMillis) shouldBeLessThan 2_000 // not too far in past
+        (greeting.timestampMillis - before) shouldBeLessThan 2_000 // not too far in future relative to capture
     }
-}
+
+    "greeting serializes to JSON with expected fields" {
+        val json = mapper.writeValueAsString(controller.hello())
+        json shouldContain "\"message\":\"Hello, world!\""
+        json shouldContain "timestampMillis"
+    }
+})

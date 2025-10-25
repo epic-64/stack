@@ -13,6 +13,8 @@ dependencies {
     // Required by Spring for Kotlin reflection (e.g., data class parameter names)
     implementation(kotlin("reflect"))
     testImplementation(libs.springBootStarterTest)
+    testImplementation(libs.kotestAssertionsCore)
+    testImplementation(libs.kotestRunnerJunit5)
 }
 
 // Spring Boot creates a bootJar by default. No special configuration needed for this simple module.
