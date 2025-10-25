@@ -7,6 +7,8 @@ plugins {
 
 dependencies {
     implementation(libs.springBootStarterWeb)
+    implementation(libs.springBootStarterDataJpa)
+    runtimeOnly(libs.h2Database)
     implementation(project(":shared"))
     // Required by Spring for Kotlin reflection (e.g., data class parameter names)
     implementation(kotlin("reflect"))
