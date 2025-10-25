@@ -6,6 +6,9 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 class HelloController {
+    @GetMapping("/ping")
+    fun ping(): String = "pong"
+
     @GetMapping("/hello")
     fun hello(): Greeting {
         // Spring Boot will automatically serialize this data class to JSON using Jackson.
