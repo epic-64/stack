@@ -19,6 +19,20 @@ kotlin {
     }
 }
 
+// Configure a simplified source layout for JVM modules:
+// - Place production sources in "kotlin/" at the module root (instead of "src/main/kotlin")
+// - Place test sources in "test/" at the module root (instead of "src/test/kotlin")
+sourceSets {
+    val main by getting {
+        kotlin.srcDirs("kotlin")
+        resources.srcDirs("resources")
+    }
+    val test by getting {
+        kotlin.srcDirs("test")
+        resources.srcDirs("test-resources")
+    }
+}
+
 tasks.withType<Test>().configureEach {
     // Configure all test Gradle tasks to use JUnitPlatform.
     useJUnitPlatform()

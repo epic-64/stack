@@ -16,6 +16,8 @@ kotlin {
     }
     sourceSets {
         val jsMain by getting {
+            kotlin.srcDirs("js")
+            resources.srcDirs("js-resources")
             dependencies {
                 implementation(project(":shared"))
                 implementation(libs.kotlinxSerialization)

@@ -18,6 +18,8 @@ kotlin {
     }
     sourceSets {
         val commonMain by getting {
+            kotlin.srcDirs("common")
+            resources.srcDirs("common-resources")
             dependencies {
                 implementation(libs.kotlinxSerialization)
             }
