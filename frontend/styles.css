@@ -173,17 +173,14 @@ body {
 }
 
 
-/* Responsive adjustments */
-@media (max-width: 900px) {
-  .appContainer {
-    min-width: auto;
-    width: 100%;
-    padding: 18px 16px;
-  }
-  .todoItem {
-    grid-template-columns: 120px 1fr auto;
-  }
-}
+/*
+  Responsive policy (IMPORTANT):
+  - Only two responsive variants are supported to keep things simple.
+    1) Desktop = default/base styles (typically > 600px).
+    2) Mobile  = styles inside the single media query at max-width: 600px.
+  - Do NOT add additional breakpoints. If you need tweaks, decide whether they
+    belong to Desktop (base) or Mobile (<=600px) and style there accordingly.
+*/
 
 @media (max-width: 600px) {
   body {
