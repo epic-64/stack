@@ -21,9 +21,11 @@ plugins {
 // Learn more about structuring projects with Gradle - https://docs.gradle.org/8.7/userguide/multi_project_builds.html
 include(":app")
 include(":utils")
+include(":hello-server")
 
 // Map logical project names to their new physical locations under the `modules/` directory.
 project(":app").projectDir = file("modules/app")
 project(":utils").projectDir = file("modules/utils")
+project(":hello-server").projectDir = file("modules/hello-server")
 
 rootProject.name = "stack2"

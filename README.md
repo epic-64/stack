@@ -16,7 +16,7 @@ This is the suggested way to use Gradle in production projects.
 
 [Learn more about Gradle tasks](https://docs.gradle.org/current/userguide/command_line_interface.html#common_tasks).
 
-This project follows the suggested multi-module setup and consists of the `app` and `utils` subprojects.
+This project follows the suggested multi-module setup and consists of the `app`, `utils`, and `hello-server` subprojects.
 The shared build logic was extracted to a convention plugin located in `buildSrc`.
 
 This project uses a version catalog (see `gradle/libs.versions.toml`) to declare and version dependencies
@@ -47,3 +47,17 @@ Alternatives:
 
 References:
 - Gradle docs: Precompiled Script Plugins and `buildSrc` directory
+
+
+## Hello server module
+
+A minimal Spring Boot server lives in the `hello-server` module with a single route.
+
+How to run:
+- `./gradlew :hello-server:bootRun`
+
+Then in another terminal:
+- `curl http://localhost:8080/hello`
+
+You should see:
+- `Hello, world!`
