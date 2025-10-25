@@ -18,14 +18,15 @@ private data class UpdateTodoRequest(val title: String? = null, val completed: B
 
 fun main() {
     val root = (document.getElementById("app") ?: document.body!!) as HTMLElement
+    // Clear initial placeholder text
+    root.innerHTML = ""
     root.className = Css.appContainer
 
     // Build UI
     val title = document.createElement("h1").apply { textContent = "Todos" }
     val form = buildForm()
     val list = document.createElement("ul") as HTMLUListElement
-    list.style.listStyleType = "none"
-    list.style.paddingLeft = "0"
+    list.className = "todoList"
 
     root.appendChild(title)
     root.appendChild(form.container)
@@ -37,27 +38,28 @@ fun main() {
         list.innerHTML = ""
         todos.forEach { todo ->
             val li = document.createElement("li") as HTMLLIElement
-            val checkbox = document.createElement("input") as HTMLInputElement
-            checkbox.type = "checkbox"
-            checkbox.checked = todo.completed
-            checkbox.onchange = {
+            li.className = "todoItem"
+
+            val span = document.createElement("span") as HTMLSpanElement
+            span.className = if (todo.completed) "todoTitle completed" else "todoTitle"
+            span.textContent = todo.title
+
+            val toggleBtn = document.createElement("button") as HTMLButtonElement
+            toggleBtn.className = if (todo.completed) "btn btnSecondary" else "btn btnPrimary"
+            toggleBtn.textContent = if (todo.completed) "Mark active" else "Mark done"
+            toggleBtn.onclick = {
                 toggleTodo(todo) { refresh() }
             }
 
-            val span = document.createElement("span") as HTMLSpanElement
-            span.textContent = todo.title
-            if (todo.completed) span.style.textDecoration = "line-through"
-
             val del = document.createElement("button") as HTMLButtonElement
+            del.className = "btn btnDanger"
             del.textContent = "Delete"
             del.onclick = {
                 deleteTodo(todo.id!!.toLong()) { refresh() }
             }
 
-            li.appendChild(checkbox)
-            li.appendChild(document.createTextNode(" "))
+            li.appendChild(toggleBtn)
             li.appendChild(span)
-            li.appendChild(document.createTextNode(" "))
             li.appendChild(del)
             list.appendChild(li)
         }
@@ -82,11 +84,14 @@ private data class FormElements(val container: HTMLElement, val onSubmit: (((Str
 
 private fun buildForm(): FormElements {
     val container = document.createElement("div") as HTMLDivElement
+    container.className = "todoForm"
     val input = document.createElement("input") as HTMLInputElement
     input.placeholder = "What needs to be done?"
     input.size = 30
+    input.className = "textInput"
     val button = document.createElement("button") as HTMLButtonElement
     button.textContent = "Add"
+    button.className = "btn btnPrimary"
 
     container.appendChild(input)
     container.appendChild(button)
