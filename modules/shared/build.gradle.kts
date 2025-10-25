@@ -1,9 +1,17 @@
+import org.gradle.jvm.toolchain.JavaLanguageVersion
+import org.gradle.jvm.toolchain.JvmVendorSpec
+
 plugins {
     kotlin("multiplatform")
     alias(libs.plugins.kotlinPluginSerialization)
 }
 
 kotlin {
+    // Ensure a full JDK with compiler is provisioned for the JVM target
+    jvmToolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+        vendor.set(JvmVendorSpec.ADOPTIUM)
+    }
     jvm()
     js(IR) {
         browser()
