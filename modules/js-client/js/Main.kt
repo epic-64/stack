@@ -40,9 +40,22 @@ fun main() {
             val li = document.createElement("li") as HTMLLIElement
             li.className = "todoItem"
 
+            // Summary row (always visible)
+            val summary = document.createElement("div") as HTMLDivElement
+            summary.className = "todoSummary"
+            summary.tabIndex = 0 // keyboard focusable
+            summary.setAttribute("role", "button")
+            summary.setAttribute("aria-expanded", "false")
+
             val span = document.createElement("span") as HTMLSpanElement
             span.className = if (todo.completed) "todoTitle completed" else "todoTitle"
             span.textContent = todo.title
+
+            summary.appendChild(span)
+
+            // Actions container (hidden until expanded)
+            val actions = document.createElement("div") as HTMLDivElement
+            actions.className = "todoActions"
 
             val toggleBtn = document.createElement("button") as HTMLButtonElement
             toggleBtn.className = if (todo.completed) "btn btnSecondary" else "btn btnPrimary"
@@ -55,12 +68,31 @@ fun main() {
             del.className = "btn btnDanger"
             del.textContent = "Delete"
             del.onclick = {
-                deleteTodo(todo.id!!.toLong()) { refresh() }
+                // id may be null if not persisted; guard
+                val id = todo.id
+                if (id != null) {
+                    deleteTodo(id.toLong()) { refresh() }
+                }
             }
 
-            li.appendChild(toggleBtn)
-            li.appendChild(span)
-            li.appendChild(del)
+            actions.appendChild(toggleBtn)
+            actions.appendChild(del)
+
+            fun toggleExpanded() {
+                val expanded = li.classList.toggle("expanded")
+                summary.setAttribute("aria-expanded", expanded.toString())
+            }
+            summary.onclick = { toggleExpanded() }
+            summary.onkeydown = { e ->
+                val ke = e as KeyboardEvent
+                if (ke.key == "Enter" || ke.key == " ") {
+                    ke.preventDefault()
+                    toggleExpanded()
+                }
+            }
+
+            li.appendChild(summary)
+            li.appendChild(actions)
             list.appendChild(li)
         }
     }
