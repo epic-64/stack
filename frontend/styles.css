@@ -117,6 +117,7 @@ body {
   border: 1px solid transparent;
   cursor: pointer;
   font: inherit;
+  min-height: 44px; /* Better tap target on touch devices */
 }
 .btnPrimary {
   background: color-mix(in lab, var(--brand) 16%, transparent);
@@ -169,4 +170,54 @@ body {
 /* Small helper styles if app.js hasn't mounted yet */
 #app {
   opacity: 0.95;
+}
+
+
+/* Responsive adjustments */
+@media (max-width: 900px) {
+  .appContainer {
+    min-width: auto;
+    width: 100%;
+    padding: 18px 16px;
+  }
+  .todoItem {
+    grid-template-columns: 120px 1fr auto;
+  }
+}
+
+@media (max-width: 600px) {
+  body {
+    padding: 12px;
+  }
+  .appContainer {
+    width: 100%;
+    padding: 14px 12px;
+  }
+  .todoForm {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .todoForm .textInput {
+    width: 100%;
+    font-size: 16px; /* prevent iOS zoom */
+  }
+  .todoForm .btn {
+    width: 100%;
+  }
+  .todoItem {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .todoTitle {
+    white-space: normal; /* allow wrapping on small screens */
+  }
+  .todoItem .btn {
+    width: 100%;
+  }
+  .todoList {
+    gap: 10px;
+  }
 }
