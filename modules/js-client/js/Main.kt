@@ -2,8 +2,6 @@ import io.holonaut.shared.Todo
 import kotlinx.browser.document
 import kotlinx.browser.window
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.w3c.dom.*
 import org.w3c.dom.events.KeyboardEvent
@@ -73,7 +71,7 @@ private fun buildForm(): FormElements {
         }
     }
     button.onclick = { submit() }
-    input.onkeypress = { e -> if ((e as KeyboardEvent).key == "Enter") submit() }
+    input.onkeypress = { e -> if (e.key == "Enter") submit() }
 
     return FormElements(container) { handler -> submitHandler = handler }
 }
