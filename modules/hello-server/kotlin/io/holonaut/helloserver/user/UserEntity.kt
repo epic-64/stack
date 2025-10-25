@@ -1,27 +1,27 @@
-package io.holonaut.helloserver.todo
+package io.holonaut.helloserver.user
 
+import io.holonaut.helloserver.team.TeamEntity
 import jakarta.persistence.*
 import java.time.Instant
 
 @Entity
-@Table(name = "todos")
-class TodoEntity(
+@Table(name = "users")
+class UserEntity(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
-    var title: String = "",
-    var completed: Boolean = false,
+    @Column(unique = true, nullable = false)
+    var username: String = "",
+    @Column(nullable = false)
+    var passwordHash: String = "",
     var createdAt: Instant? = null,
     var updatedAt: Instant? = null,
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
-        name = "todo_teams",
-        joinColumns = [JoinColumn(name = "todo_id")],
+        name = "user_teams",
+        joinColumns = [JoinColumn(name = "user_id")],
         inverseJoinColumns = [JoinColumn(name = "team_id")]
     )
-    var teams: MutableSet<io.holonaut.helloserver.team.TeamEntity> = mutableSetOf(),
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by_user_id")
-    var createdBy: io.holonaut.helloserver.user.UserEntity? = null,
+    var teams: MutableSet<TeamEntity> = mutableSetOf(),
 ) {
     @PrePersist
     fun onCreate() {

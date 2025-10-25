@@ -23,6 +23,8 @@ h2Database = { module = "com.h2database:h2" }
 kotestAssertionsCore = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
 kotestFrameworkEngine = { module = "io.kotest:kotest-framework-engine", version.ref = "kotest" }
 kotestRunnerJunit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
+springBootStarterSecurity = { module = "org.springframework.boot:spring-boot-starter-security" }
+jacksonModuleKotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin" }
 
 # Libraries can be bundled together for easier import
 [bundles]

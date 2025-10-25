@@ -3,11 +3,9 @@ package io.holonaut.shared
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class Todo(
+data class Team(
     val id: Long? = null,
-    val title: String,
-    val completed: Boolean = false,
+    val name: String,
     val createdAtEpochMillis: Long? = null,
     val updatedAtEpochMillis: Long? = null,
-    val teamIds: List<Long> = emptyList(),
 )

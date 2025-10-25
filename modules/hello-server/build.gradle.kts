@@ -15,6 +15,8 @@ dependencies {
     testImplementation(libs.springBootStarterTest)
     testImplementation(libs.kotestAssertionsCore)
     testImplementation(libs.kotestRunnerJunit5)
+    implementation(libs.springBootStarterSecurity)
+    implementation(libs.jacksonModuleKotlin)
 }
 
 // Spring Boot creates a bootJar by default. No special configuration needed for this simple module.
