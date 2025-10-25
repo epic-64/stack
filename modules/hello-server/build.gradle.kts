@@ -28,4 +28,6 @@ tasks.withType<org.springframework.boot.gradle.tasks.run.BootRun> {
 tasks.withType<Test> {
     // Use the in-memory DB defined in application-test.properties
     systemProperty("spring.profiles.active", "test")
+    // Disable Kotest autoscan per request
+    systemProperty("kotest.framework.classpath.scanning.autoscan.disable", "true")
 }
