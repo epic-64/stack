@@ -2,7 +2,6 @@ import io.holonaut.shared.Greeting
 import kotlinx.browser.document
 import kotlinx.browser.window
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.decodeFromString
 
 fun main() {
     val root = document.getElementById("app")
@@ -18,7 +17,7 @@ fun main() {
     }
 
     // Fetch Greeting JSON from the backend and deserialize using kotlinx.serialization
-    window.fetch("/hello")
+    window.fetch("http://localhost:8080/hello")
         .then { response ->
             if (!response.ok) {
                 throw Throwable("HTTP ${response.status}")
