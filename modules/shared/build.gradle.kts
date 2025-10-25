@@ -1,5 +1,6 @@
 plugins {
     kotlin("multiplatform")
+    alias(libs.plugins.kotlinPluginSerialization)
 }
 
 kotlin {
@@ -8,7 +9,11 @@ kotlin {
         browser()
     }
     sourceSets {
-        val commonMain by getting
+        val commonMain by getting {
+            dependencies {
+                implementation(libs.kotlinxSerialization)
+            }
+        }
         val commonTest by getting
         val jvmMain by getting
         val jvmTest by getting

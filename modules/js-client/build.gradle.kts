@@ -18,6 +18,7 @@ kotlin {
         val jsMain by getting {
             dependencies {
                 implementation(project(":shared"))
+                implementation(libs.kotlinxSerialization)
             }
         }
     }

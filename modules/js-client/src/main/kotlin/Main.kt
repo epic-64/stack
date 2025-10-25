@@ -1,22 +1,35 @@
 import io.holonaut.shared.Greeting
 import kotlinx.browser.document
-import kotlin.js.Date
+import kotlinx.browser.window
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.decodeFromString
 
 fun main() {
-    val greeting = Greeting(
-        message = "Hello from Kotlin/JS via shared type!",
-        timestampMillis = Date.now().toLong()
-    )
-
-    val text = "${'$'}{greeting.message} (ts=${'$'}{greeting.timestampMillis})"
-
     val root = document.getElementById("app")
-    if (root != null) {
-        root.textContent = text
-    } else {
-        // Fallback: append a new node if #app is not present
-        val p = document.createElement("p")
-        p.textContent = text
-        document.body?.appendChild(p)
+
+    fun render(text: String) {
+        if (root != null) {
+            root.textContent = text
+        } else {
+            val p = document.createElement("p")
+            p.textContent = text
+            document.body?.appendChild(p)
+        }
     }
+
+    // Fetch Greeting JSON from the backend and deserialize using kotlinx.serialization
+    window.fetch("/hello")
+        .then { response ->
+            if (!response.ok) {
+                throw Throwable("HTTP ${'$'}{response.status}")
+            }
+            response.text()
+        }
+        .then { body ->
+            val greeting = Json.decodeFromString<Greeting>(body)
+            render("${'$'}{greeting.message} (ts=${'$'}{greeting.timestampMillis})")
+        }
+        .catch { err ->
+            render("Failed to load greeting: ${'$'}err")
+        }
 }
