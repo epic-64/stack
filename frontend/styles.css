@@ -24,12 +24,17 @@
   }
 }
 
-html, body {
+/* Use a universal border-box model to avoid overflow due to padding/borders */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
   height: 100%;
+  overflow-x: hidden; /* prevent horizontal scrollbar from background gradients */
 }
 
 body {
   margin: 0;
+  min-height: 100dvh; /* ensure background stretches to full viewport height */
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
   background: radial-gradient(1200px 800px at 85% -100px, rgba(79,140,255,0.18), transparent 60%),
               radial-gradient(1000px 700px at -10% 20%, rgba(25,195,125,0.18), transparent 60%),
@@ -38,12 +43,14 @@ body {
   display: grid;
   place-items: center;
   padding: 24px;
+  overflow-x: hidden; /* belt-and-suspenders */
 }
 
 /* App container class referenced from Kotlin via Css.appContainer */
 .appContainer {
   display: block;
-  min-width: min(90vw, 720px);
+  width: min(100%, 720px);
+  margin-inline: auto;
   padding: 22px 24px;
   border-radius: var(--radius);
   background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02)) var(--panel);
@@ -102,9 +109,11 @@ body {
 }
 
 .todoTitle {
+  min-width: 0; /* allow grid item to shrink and not force horizontal scroll */
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  overflow-wrap: anywhere; /* break extremely long words if needed */
 }
 .todoTitle.completed {
   color: var(--muted);
