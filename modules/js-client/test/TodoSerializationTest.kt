@@ -2,13 +2,15 @@ import io.holonaut.shared.Todo
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.nulls.shouldBeNull
+import io.kotest.matchers.string.shouldContain
 
-class TodoSerializationTest {
-    @Test
-    fun roundTrip_preservesAllFields() {
+class TodoSerializationSpec : StringSpec({
+    val json = Json // default configuration
+
+    "round trip serialization preserves all fields" {
         val original = Todo(
             id = 42L,
             title = "Write JS client test",
@@ -16,20 +18,32 @@ class TodoSerializationTest {
             createdAtEpochMillis = 111L,
             updatedAtEpochMillis = 222L,
         )
-        val json = Json.encodeToString(original)
-        val decoded = Json.decodeFromString<Todo>(json)
-        assertEquals(original, decoded, "Serialized then deserialized Todo should match original")
-        assertTrue(json.contains("Write JS client test"))
+        val encoded = json.encodeToString(original)
+        val decoded = json.decodeFromString<Todo>(encoded)
+
+        decoded shouldBe original
+        encoded shouldContain "Write JS client test"
+        // spot check a couple of fields explicitly for clarity
+        decoded.id shouldBe 42L
+        decoded.completed shouldBe true
     }
 
-    @Test
-    fun defaults_areAppliedWhenMissing() {
-        // Only required field title
-        val json = """{"title":"Only title"}"""
-        val decoded = Json.decodeFromString<Todo>(json)
-        assertEquals("Only title", decoded.title)
-        assertEquals(false, decoded.completed, "Default for completed should be false")
-        assertEquals(null, decoded.id)
+    "missing optional fields apply defaults" {
+        val encoded = """{"title":"Only title"}"""
+        val decoded = json.decodeFromString<Todo>(encoded)
+        decoded.title shouldBe "Only title"
+        decoded.completed shouldBe false
+        decoded.id.shouldBeNull()
+        decoded.createdAtEpochMillis.shouldBeNull()
+        decoded.updatedAtEpochMillis.shouldBeNull()
     }
-}
 
+    "explicit defaults serialize and deserialize identically" {
+        val withDefaults = Todo(title = "Just a title")
+        val encoded = json.encodeToString(withDefaults)
+        val decoded = json.decodeFromString<Todo>(encoded)
+        decoded shouldBe withDefaults
+        // completed defaults to false
+        decoded.completed shouldBe false
+    }
+})

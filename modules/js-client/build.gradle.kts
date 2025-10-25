@@ -29,6 +29,8 @@ kotlin {
             kotlin.srcDirs("test")
             dependencies {
                 implementation(kotlin("test"))
+                implementation(libs.kotestAssertionsCore)
+                implementation(libs.kotestFrameworkEngine)
             }
         }
     }
