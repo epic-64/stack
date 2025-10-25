@@ -46,3 +46,6 @@ bin/
 .DS_Store
 /frontend/gen
 /.idea/copilotDiffState.xml
+
+### Database ###
+/data/todo-db.mv.db
