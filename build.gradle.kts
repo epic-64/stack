@@ -15,22 +15,3 @@ tasks.register("watchJs") {
     description = "Watches :js-client sources and rebuilds frontend/gen/app.js on changes."
     dependsOn(":js-client:jsBrowserDevelopmentWebpack")
 }
-
-// Aggregates ALL tests in all subprojects (JVM and JS) into a single entry point.
-// It picks up conventional test task names such as `test`, `jsNodeTest`, `jsBrowserTest`, etc.
-// Usage: ./gradlew allTests
-tasks.register("allTests") {
-    group = "verification"
-    description = "Runs all unit tests in all subprojects (JVM and JS)."
-
-    // Depend on any task named exactly 'test' or ending with 'Test' in every subproject.
-    // TaskCollection is lazy, so this will also pick up tasks added later during evaluation.
-    subprojects.forEach { sub ->
-        dependsOn(
-            sub.tasks.matching { t ->
-                val n = t.name
-                n == "test" || n.endsWith("Test")
-            }
-        )
-    }
-}
