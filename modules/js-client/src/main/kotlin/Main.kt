@@ -21,15 +21,15 @@ fun main() {
     window.fetch("/hello")
         .then { response ->
             if (!response.ok) {
-                throw Throwable("HTTP ${'$'}{response.status}")
+                throw Throwable("HTTP ${response.status}")
             }
             response.text()
         }
         .then { body ->
             val greeting = Json.decodeFromString<Greeting>(body)
-            render("${'$'}{greeting.message} (ts=${'$'}{greeting.timestampMillis})")
+            render("${greeting.message} (ts=${greeting.timestampMillis})")
         }
         .catch { err ->
-            render("Failed to load greeting: ${'$'}err")
+            render("Failed to load greeting: $err")
         }
 }

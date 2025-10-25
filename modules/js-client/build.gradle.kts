@@ -28,14 +28,14 @@ kotlin {
 // We configure both development and production webpack tasks.
 
 tasks.named<KotlinWebpack>("jsBrowserDevelopmentWebpack").configure {
-    outputDirectory = file("${rootDir}/frontend")
+    outputDirectory = file("${rootDir}/frontend/gen")
 }
 
 tasks.named<KotlinWebpack>("jsBrowserProductionWebpack").configure {
-    outputDirectory = file("${rootDir}/frontend")
+    outputDirectory = file("${rootDir}/frontend/gen")
 }
 
-// Ensure a regular `build` creates a bundle in `frontend/` as well (prod optimized).
+// Ensure a regular `build` creates a bundle in `frontend/gen/` as well (prod optimized).
 tasks.named("build").configure {
     dependsOn(tasks.named("jsBrowserProductionWebpack"))
 }
