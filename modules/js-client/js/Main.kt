@@ -20,11 +20,9 @@ private data class UpdateTodoRequest(val title: String? = null, val completed: B
 
 fun main() {
     val root = (document.getElementById("app") ?: document.body!!) as HTMLElement
-    // Clear initial placeholder text
-    root.innerHTML = ""
+    root.innerHTML = "" // clear placeholder
     root.className = Css.appContainer
 
-    // Build UI
     val title = document.createElement("h1").apply { textContent = "Stack" }
     val form = buildForm()
     val list = document.createElement("ul") as HTMLUListElement
@@ -34,88 +32,23 @@ fun main() {
     root.appendChild(form.container)
     root.appendChild(list)
 
-    var refresh: () -> Unit = {}
-
-    fun renderTodos(todos: List<Todo>) {
-        list.innerHTML = ""
-        todos.forEach { todo ->
-            val li = document.createElement("li") as HTMLLIElement
-            li.className = "todoItem"
-
-            // Summary row (always visible)
-            val summary = document.createElement("div") as HTMLDivElement
-            summary.className = "todoSummary"
-            summary.tabIndex = 0 // keyboard focusable
-            summary.setAttribute("role", "button")
-            summary.setAttribute("aria-expanded", "false")
-
-            val span = document.createElement("span") as HTMLSpanElement
-            span.className = if (todo.completed) "todoTitle completed" else "todoTitle"
-            span.textContent = todo.title
-
-            summary.appendChild(span)
-
-            // Actions container (hidden until expanded)
-            val actions = document.createElement("div") as HTMLDivElement
-            actions.className = "todoActions"
-
-            val toggleBtn = document.createElement("button") as HTMLButtonElement
-            toggleBtn.className = if (todo.completed) "btn btnSecondary" else "btn btnPrimary"
-            toggleBtn.textContent = if (todo.completed) "Mark active" else "Mark done"
-            toggleBtn.onclick = {
-                toggleTodo(todo) { refresh() }
-            }
-
-            val del = document.createElement("button") as HTMLButtonElement
-            del.className = "btn btnDanger"
-            del.textContent = "Delete"
-            del.onclick = {
-                // id may be null if not persisted; guard
-                val id = todo.id
-                if (id != null) {
-                    deleteTodo(id) { refresh() }
-                }
-            }
-
-            actions.appendChild(toggleBtn)
-            actions.appendChild(del)
-
-            fun toggleExpanded() {
-                val expanded = li.classList.toggle("expanded")
-                summary.setAttribute("aria-expanded", expanded.toString())
-            }
-            summary.onclick = { toggleExpanded() }
-            summary.onkeydown = { e ->
-                val ke = e as KeyboardEvent
-                if (ke.key == "Enter" || ke.key == " ") {
-                    ke.preventDefault()
-                    toggleExpanded()
-                }
-            }
-
-            li.appendChild(summary)
-            li.appendChild(actions)
-            list.appendChild(li)
-        }
-    }
-
+    lateinit var refresh: () -> Unit
     refresh = {
-        fetchTodos { todos -> renderTodos(todos) }
+        fetchTodos { todos -> renderTodosInto(list, todos, refresh) }
     }
 
-    // Wire form submit
     form.onSubmit { titleText ->
         createTodo(titleText) { refresh() }
     }
 
-    // initial load
-    refresh()
+    refresh() // initial load
 }
 
 private data class FormElements(val container: HTMLElement, val onSubmit: (((String) -> Unit) -> Unit)) {
     fun onSubmit(handler: (String) -> Unit) = onSubmit.invoke(handler)
 }
 
+// Build the input form (title box + add button)
 private fun buildForm(): FormElements {
     val container = document.createElement("div") as HTMLDivElement
     container.className = "todoForm"
@@ -140,11 +73,70 @@ private fun buildForm(): FormElements {
         }
     }
     button.onclick = { submit() }
-    input.onkeypress = { e ->
-        if ((e as KeyboardEvent).key == "Enter") submit()
-    }
+    input.onkeypress = { e -> if ((e as KeyboardEvent).key == "Enter") submit() }
 
     return FormElements(container) { handler -> submitHandler = handler }
+}
+
+// Render the list of todos into the provided UL element.
+private fun renderTodosInto(list: HTMLUListElement, todos: List<Todo>, refresh: () -> Unit) {
+    list.innerHTML = ""
+    todos.forEach { todo ->
+        list.appendChild(buildTodoListItem(todo, refresh))
+    }
+}
+
+// Build a single LI representing a todo (summary + actions)
+private fun buildTodoListItem(todo: Todo, refresh: () -> Unit): HTMLLIElement {
+    val li = document.createElement("li") as HTMLLIElement
+    li.className = "todoItem"
+
+    val summary = document.createElement("div") as HTMLDivElement
+    summary.className = "todoSummary"
+    summary.tabIndex = 0
+    summary.setAttribute("role", "button")
+    summary.setAttribute("aria-expanded", "false")
+
+    val span = document.createElement("span") as HTMLSpanElement
+    span.className = if (todo.completed) "todoTitle completed" else "todoTitle"
+    span.textContent = todo.title
+    summary.appendChild(span)
+
+    val actions = document.createElement("div") as HTMLDivElement
+    actions.className = "todoActions"
+
+    val toggleBtn = document.createElement("button") as HTMLButtonElement
+    toggleBtn.className = if (todo.completed) "btn btnSecondary" else "btn btnPrimary"
+    toggleBtn.textContent = if (todo.completed) "Mark active" else "Mark done"
+    toggleBtn.onclick = { toggleTodo(todo) { refresh() } }
+
+    val del = document.createElement("button") as HTMLButtonElement
+    del.className = "btn btnDanger"
+    del.textContent = "Delete"
+    del.onclick = {
+        val id = todo.id
+        if (id != null) deleteTodo(id) { refresh() }
+    }
+
+    actions.appendChild(toggleBtn)
+    actions.appendChild(del)
+
+    fun toggleExpanded() {
+        val expanded = li.classList.toggle("expanded")
+        summary.setAttribute("aria-expanded", expanded.toString())
+    }
+    summary.onclick = { toggleExpanded() }
+    summary.onkeydown = { e ->
+        val ke = e as KeyboardEvent
+        if (ke.key == "Enter" || ke.key == " ") {
+            ke.preventDefault()
+            toggleExpanded()
+        }
+    }
+
+    li.appendChild(summary)
+    li.appendChild(actions)
+    return li
 }
 
 private fun fetchTodos(done: (List<Todo>) -> Unit) {
