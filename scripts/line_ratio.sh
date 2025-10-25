@@ -63,4 +63,3 @@ Ratio (Kotlin/Gradle):       ${ratio}
 Kotlin % of (Kotlin+Gradle): ${percent_kotlin_of_total}%
 Files counted: ${#kotlin_files[@]} Kotlin source files, ${#gradle_files[@]} Gradle build scripts.
 EOF
-
