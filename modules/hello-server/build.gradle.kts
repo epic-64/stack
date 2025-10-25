@@ -8,6 +8,8 @@ plugins {
 dependencies {
     implementation(libs.springBootStarterWeb)
     implementation(project(":shared"))
+    // Required by Spring for Kotlin reflection (e.g., data class parameter names)
+    implementation(kotlin("reflect"))
     testImplementation(libs.springBootStarterTest)
 }
 
