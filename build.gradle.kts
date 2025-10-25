@@ -12,6 +12,6 @@ tasks.register("startServer") {
 // Use Gradle's continuous mode to keep watching: `./gradlew watchJs --continuous`
 tasks.register("watchJs") {
     group = "application"
-    description = "Watches :modules:js-client sources and rebuilds frontend/gen/app.js on changes."
-    dependsOn(":modules:js-client:jsBrowserDevelopmentWebpack")
+    description = "Watches :js-client sources and rebuilds frontend/gen/app.js on changes."
+    dependsOn(":js-client:jsBrowserDevelopmentWebpack")
 }
