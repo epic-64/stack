@@ -54,7 +54,8 @@ References:
 A minimal Spring Boot server lives in the `hello-server` module with a single route.
 
 How to run:
-- `./gradlew :hello-server:bootRun`
+- From the project root (convenience task): `./gradlew startServer`
+- Or directly via the module task: `./gradlew :hello-server:bootRun`
 
 Then in another terminal:
 - `curl http://localhost:8080/hello`
