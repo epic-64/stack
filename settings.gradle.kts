@@ -32,4 +32,4 @@ project(":hello-server").projectDir = file("modules/hello-server")
 project(":js-client").projectDir = file("modules/js-client")
 project(":shared").projectDir = file("modules/shared")
 
-rootProject.name = "stack2"
+rootProject.name = "stack"
