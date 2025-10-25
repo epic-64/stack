@@ -1,7 +1,7 @@
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpack
 
 plugins {
-    kotlin("js")
+    kotlin("multiplatform")
 }
 
 kotlin {
@@ -14,20 +14,27 @@ kotlin {
         }
         binaries.executable()
     }
+    sourceSets {
+        val jsMain by getting {
+            dependencies {
+                implementation(project(":shared"))
+            }
+        }
+    }
 }
 
 // Put the webpack outputs into the root-level `frontend/` directory so it can be served as a static site.
 // We configure both development and production webpack tasks.
 
-tasks.named<KotlinWebpack>("browserDevelopmentWebpack").configure {
+tasks.named<KotlinWebpack>("jsBrowserDevelopmentWebpack").configure {
     outputDirectory = file("${rootDir}/frontend")
 }
 
-tasks.named<KotlinWebpack>("browserProductionWebpack").configure {
+tasks.named<KotlinWebpack>("jsBrowserProductionWebpack").configure {
     outputDirectory = file("${rootDir}/frontend")
 }
 
 // Ensure a regular `build` creates a bundle in `frontend/` as well (prod optimized).
 tasks.named("build").configure {
-    dependsOn(tasks.named("browserProductionWebpack"))
+    dependsOn(tasks.named("jsBrowserProductionWebpack"))
 }

@@ -7,6 +7,7 @@ plugins {
 
 dependencies {
     implementation(libs.springBootStarterWeb)
+    implementation(project(":shared"))
     testImplementation(libs.springBootStarterTest)
 }
 

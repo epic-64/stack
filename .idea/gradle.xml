@@ -23,6 +23,7 @@
             <option value="$PROJECT_DIR$/modules/app" />
             <option value="$PROJECT_DIR$/modules/hello-server" />
             <option value="$PROJECT_DIR$/modules/js-client" />
+            <option value="$PROJECT_DIR$/modules/shared" />
             <option value="$PROJECT_DIR$/modules/utils" />
           </set>
         </option>
