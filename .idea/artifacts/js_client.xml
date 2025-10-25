@@ -1,0 +1,6 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="js-client">
+    <output-path>$PROJECT_DIR$/modules/js-client/build/libs</output-path>
+    <root id="archive" name="js-client.jar" />
+  </artifact>
+</component>

@@ -22,10 +22,12 @@ plugins {
 include(":app")
 include(":utils")
 include(":hello-server")
+include(":js-client")
 
 // Map logical project names to their new physical locations under the `modules/` directory.
 project(":app").projectDir = file("modules/app")
 project(":utils").projectDir = file("modules/utils")
 project(":hello-server").projectDir = file("modules/hello-server")
+project(":js-client").projectDir = file("modules/js-client")
 
 rootProject.name = "stack2"

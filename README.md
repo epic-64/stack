@@ -61,3 +61,15 @@ Then in another terminal:
 
 You should see:
 - `Hello, world!`
+
+## Kotlin/JS frontend
+
+A simple Kotlin/JS module lives in `modules/js-client`. It compiles to a single bundle `app.js` that is written to the root-level `frontend/` directory alongside an `index.html` file.
+
+How to build the JS bundle:
+- `./gradlew :js-client:jsBrowserProductionWebpack`
+  - The output `frontend/app.js` will be generated.
+
+Open the frontend:
+- Open `frontend/index.html` in your browser (double-click it or serve the folder via any static HTTP server).
+- You should see the text replaced to: `Hello from Kotlin/JS!`.
