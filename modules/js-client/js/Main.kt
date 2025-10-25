@@ -23,7 +23,7 @@ fun main() {
     root.className = Css.appContainer
 
     // Build UI
-    val title = document.createElement("h1").apply { textContent = "Todos" }
+    val title = document.createElement("h1").apply { textContent = "Stack" }
     val form = buildForm()
     val list = document.createElement("ul") as HTMLUListElement
     list.className = "todoList"
