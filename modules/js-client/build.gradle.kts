@@ -12,9 +12,18 @@ kotlin {
                 // Name the produced bundle consistently. It will be written into the frontend/ dir (see tasks below).
                 outputFileName = "app.js"
             }
+            // Keep default browser test task (karma) if needed.
+        }
+        // Add a Node.js target for simpler headless execution of unit tests (useful in IDE / CI without browsers)
+        nodejs {
+            testTask {
+                useMocha() // lightweight test runner
+            }
         }
         binaries.executable()
     }
+    // Provide a JDK toolchain so the IDE / Gradle always has a JDK associated (fixes "No JDK specified" run configs)
+    jvmToolchain(21)
     sourceSets {
         val jsMain by getting {
             kotlin.srcDirs("js")
@@ -24,7 +33,7 @@ kotlin {
                 implementation(libs.kotlinxSerialization)
             }
         }
-        // Map tests to the existing 'test' directory and add kotlin test library.
+        // Map tests to the existing 'test' directory and add kotlin test / kotest libs.
         val jsTest by getting {
             kotlin.srcDirs("test")
             dependencies {
