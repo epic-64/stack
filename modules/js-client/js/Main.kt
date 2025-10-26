@@ -26,6 +26,13 @@ private data class UpdateTodoRequest(
 
 private var progressIntervals: MutableList<Int> = mutableListOf()
 
+private inline fun <reified T : HTMLElement> el(tag: String, classes: String? = null, block: T.() -> Unit = {}): T {
+    val node = document.createElement(tag) as T
+    if (!classes.isNullOrBlank()) node.className = classes
+    node.block()
+    return node
+}
+
 fun main() {
     val root = (document.getElementById("app") ?: document.body!!) as HTMLElement
     root.innerHTML = ""
@@ -41,25 +48,17 @@ fun main() {
 private fun renderApp(root: HTMLElement, user: User) {
     root.innerHTML = ""
 
-    val headerRow = document.createElement("div") as HTMLDivElement
-    headerRow.className = "todoHeaderRow"
-
-    val title = document.createElement("h1").apply { textContent = "Stack – ${user.username}" }
-
-    val logoutBtn = document.createElement("button") as HTMLButtonElement
-    logoutBtn.className = "btn btnSecondary"
-    logoutBtn.textContent = "Logout"
-    logoutBtn.onclick = {
-        logout(root)
+    val headerRow = el<HTMLDivElement>("div", "todoHeaderRow")
+    val title = el<HTMLHeadingElement>("h1") { textContent = "Stack – ${user.username}" }
+    val logoutBtn = el<HTMLButtonElement>("button", "btn btnSecondary") {
+        textContent = "Logout"
+        onclick = { logout(root) }
     }
-
     headerRow.appendChild(title)
     headerRow.appendChild(logoutBtn)
 
     val form = buildForm()
-    val list = document.createElement("ul") as HTMLUListElement
-    list.className = "todoList"
-
+    val list = el<HTMLUListElement>("ul", "todoList")
     root.appendChild(headerRow)
     root.appendChild(form.container)
     root.appendChild(list)
@@ -85,16 +84,12 @@ private data class FormElements(val container: HTMLElement, val onSubmit: (((Str
 
 // Build the input form (title box + add button)
 private fun buildForm(): FormElements {
-    val container = document.createElement("div") as HTMLDivElement
-    container.className = "todoForm"
-    val input = document.createElement("input") as HTMLInputElement
-    input.placeholder = "What needs to be done?"
-    input.size = 30
-    input.className = "textInput"
-    val button = document.createElement("button") as HTMLButtonElement
-    button.textContent = "Add"
-    button.className = "btn btnPrimary"
-
+    val container = el<HTMLDivElement>("div", "todoForm")
+    val input = el<HTMLInputElement>("input", "textInput") {
+        placeholder = "What needs to be done?"
+        size = 30
+    }
+    val button = el<HTMLButtonElement>("button", "btn btnPrimary") { textContent = "Add" }
     container.appendChild(input)
     container.appendChild(button)
 
@@ -124,18 +119,15 @@ private fun renderTodosInto(list: HTMLUListElement, todos: List<Todo>, refresh: 
 
 // Build a single LI representing a todo (summary + actions)
 private fun buildTodoListItem(todo: Todo, refresh: () -> Unit): HTMLLIElement {
-    val li = document.createElement("li") as HTMLLIElement
-    li.className = "todoItem"
-
-    val summary = document.createElement("div") as HTMLDivElement
-    summary.className = "todoSummary"
-    summary.tabIndex = 0
-    summary.setAttribute("role", "button")
-    summary.setAttribute("aria-expanded", "false")
-
-    val span = document.createElement("span") as HTMLSpanElement
-    span.className = if (todo.completed) "todoTitle completed" else "todoTitle"
-    span.textContent = todo.title
+    val li = el<HTMLLIElement>("li", "todoItem")
+    val summary = el<HTMLDivElement>("div", "todoSummary") {
+        tabIndex = 0
+        setAttribute("role", "button")
+        setAttribute("aria-expanded", "false")
+    }
+    val span = el<HTMLSpanElement>("span", if (todo.completed) "todoTitle completed" else "todoTitle") {
+        textContent = todo.title
+    }
     summary.appendChild(span)
 
     // progress bar (only if start + duration present)
@@ -144,10 +136,8 @@ private fun buildTodoListItem(todo: Todo, refresh: () -> Unit): HTMLLIElement {
         val start: Long = todo.startAtEpochMillis!!
         val duration: Long = todo.durationMillis!!
         val end = start + duration
-        progressContainer = document.createElement("div") as HTMLDivElement
-        progressContainer.className = "progressContainer"
-        val progressFill = document.createElement("div") as HTMLDivElement
-        progressFill.className = "progressFill"
+        progressContainer = el<HTMLDivElement>("div", "progressContainer")
+        val progressFill = el<HTMLDivElement>("div", "progressFill")
         var intervalHandle: Int? = null
         fun updateBar() {
             val now = Date.now().toLong()
@@ -169,65 +159,50 @@ private fun buildTodoListItem(todo: Todo, refresh: () -> Unit): HTMLLIElement {
         // no longer appended to summary here
     }
 
-    val actions = document.createElement("div") as HTMLDivElement
-    actions.className = "todoActions"
-
-    val toggleBtn = document.createElement("button") as HTMLButtonElement
-    toggleBtn.className = if (todo.completed) "btn btnSecondary" else "btn btnPrimary"
-    toggleBtn.textContent = if (todo.completed) "Mark active" else "Mark done"
-    toggleBtn.onclick = { toggleTodo(todo) { refresh() } }
-
-    val del = document.createElement("button") as HTMLButtonElement // fixed type
-    del.className = "btn btnDanger"
-    del.textContent = "Delete"
-    del.onclick = {
-        val id = todo.id
-        if (id != null) deleteTodo(id) { refresh() }
+    val actions = el<HTMLDivElement>("div", "todoActions")
+    val toggleBtn = el<HTMLButtonElement>("button", if (todo.completed) "btn btnSecondary" else "btn btnPrimary") {
+        textContent = if (todo.completed) "Mark active" else "Mark done"
+        onclick = { toggleTodo(todo) { refresh() } }
     }
-
-    // Scheduling edit UI (start + duration) inside expanded actions
-    val scheduleWrapper = document.createElement("div") as HTMLDivElement
-    scheduleWrapper.className = "scheduleWrapper"
-
-    val scheduleRow = document.createElement("div") as HTMLDivElement
-    scheduleRow.className = "scheduleRow"
-
-    val startInput = document.createElement("input") as HTMLInputElement
-    startInput.type = "datetime-local"
-    startInput.className = "textInput scheduleStartInput"
-    startInput.placeholder = "Start"
-    val existingStart = todo.startAtEpochMillis
-    if (existingStart != null) {
-        startInput.value = millisToLocalDateTimeString(existingStart)
-    }
-
-    val durationInput = document.createElement("input") as HTMLInputElement
-    durationInput.type = "number"
-    durationInput.min = "0"
-    durationInput.placeholder = "Duration (min)"
-    durationInput.className = "textInput scheduleDurationInput"
-    val existingDuration = todo.durationMillis
-    if (existingDuration != null) {
-        durationInput.value = (existingDuration / 60000L).toString()
-    }
-
-    val saveBtn = document.createElement("button") as HTMLButtonElement
-    saveBtn.className = "btn btnPrimary"
-    saveBtn.textContent = "Save schedule"
-    saveBtn.onclick = {
-        val id = todo.id
-        if (id != null) {
-            val startAtMs = startInput.value.trim().let { if (it.isNotEmpty()) Date(it).getTime().toLong() else null }
-            val durationMs = durationInput.value.trim().let { if (it.isNotEmpty()) (it.toLongOrNull() ?: 0L) * 60000L else null }
-            patchSchedule(id, startAtMs, durationMs) { refresh() }
+    val del = el<HTMLButtonElement>("button", "btn btnDanger") {
+        textContent = "Delete"
+        onclick = {
+            val id = todo.id
+            if (id != null) deleteTodo(id) { refresh() }
         }
     }
 
+    // Scheduling edit UI (start + duration) inside expanded actions
+    val scheduleWrapper = el<HTMLDivElement>("div", "scheduleWrapper")
+    val scheduleRow = el<HTMLDivElement>("div", "scheduleRow")
+    val startInput = el<HTMLInputElement>("input", "textInput scheduleStartInput") {
+        type = "datetime-local"
+        placeholder = "Start"
+        val existingStart = todo.startAtEpochMillis
+        if (existingStart != null) value = millisToLocalDateTimeString(existingStart)
+    }
+    val durationInput = el<HTMLInputElement>("input", "textInput scheduleDurationInput") {
+        type = "number"
+        min = "0"
+        placeholder = "Duration (min)"
+        val existingDuration = todo.durationMillis
+        if (existingDuration != null) value = (existingDuration / 60000L).toString()
+    }
+    val saveBtn = el<HTMLButtonElement>("button", "btn btnPrimary") {
+        textContent = "Save schedule"
+        onclick = {
+            val id = todo.id
+            if (id != null) {
+                val startAtMs = startInput.value.trim().let { if (it.isNotEmpty()) Date(it).getTime().toLong() else null }
+                val durationMs = durationInput.value.trim().let { if (it.isNotEmpty()) (it.toLongOrNull() ?: 0L) * 60000L else null }
+                patchSchedule(id, startAtMs, durationMs) { refresh() }
+            }
+        }
+    }
     scheduleRow.appendChild(startInput)
     scheduleRow.appendChild(durationInput)
     scheduleRow.appendChild(saveBtn)
     scheduleWrapper.appendChild(scheduleRow)
-
     actions.appendChild(toggleBtn)
     actions.appendChild(del)
     actions.appendChild(scheduleWrapper)
