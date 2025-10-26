@@ -42,10 +42,7 @@ private fun renderApp(root: HTMLElement, user: User) {
     root.innerHTML = ""
 
     val headerRow = document.createElement("div") as HTMLDivElement
-    headerRow.style.display = "flex"
-    headerRow.style.alignItems = "center"
-    headerRow.style.justifyContent = "space-between"
-    headerRow.style.marginBottom = "14px"
+    headerRow.className = "todoHeaderRow"
 
     val title = document.createElement("h1").apply { textContent = "Stack – ${user.username}" }
 
@@ -190,22 +187,15 @@ private fun buildTodoListItem(todo: Todo, refresh: () -> Unit): HTMLLIElement {
 
     // Scheduling edit UI (start + duration) inside expanded actions
     val scheduleWrapper = document.createElement("div") as HTMLDivElement
-    scheduleWrapper.style.display = "flex"
-    scheduleWrapper.style.flexDirection = "column"
-    scheduleWrapper.style.setProperty("gap", "6px")
-    scheduleWrapper.style.flex = "1 1 100%"
+    scheduleWrapper.className = "scheduleWrapper"
 
     val scheduleRow = document.createElement("div") as HTMLDivElement
-    scheduleRow.style.display = "flex"
-    scheduleRow.style.setProperty("gap", "8px")
-    scheduleRow.style.flexWrap = "wrap"
-    scheduleRow.style.alignItems = "center"
+    scheduleRow.className = "scheduleRow"
 
     val startInput = document.createElement("input") as HTMLInputElement
     startInput.type = "datetime-local"
-    startInput.className = "textInput"
+    startInput.className = "textInput scheduleStartInput"
     startInput.placeholder = "Start"
-    startInput.style.maxWidth = "220px"
     val existingStart = todo.startAtEpochMillis
     if (existingStart != null) {
         startInput.value = millisToLocalDateTimeString(existingStart)
@@ -215,8 +205,7 @@ private fun buildTodoListItem(todo: Todo, refresh: () -> Unit): HTMLLIElement {
     durationInput.type = "number"
     durationInput.min = "0"
     durationInput.placeholder = "Duration (min)"
-    durationInput.className = "textInput"
-    durationInput.style.maxWidth = "140px"
+    durationInput.className = "textInput scheduleDurationInput"
     val existingDuration = todo.durationMillis
     if (existingDuration != null) {
         durationInput.value = (existingDuration / 60000L).toString()
