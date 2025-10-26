@@ -1,6 +1,7 @@
 package io.holonaut.helloserver.todo
 
 import io.holonaut.helloserver.security.AppUserDetails
+import io.holonaut.helloserver.team.TeamRepository
 import io.holonaut.shared.Todo
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -11,7 +12,7 @@ import org.springframework.web.server.ResponseStatusException
 @RequestMapping("/api/todos")
 class TodoController(
     private val repo: TodoRepository,
-    private val teamRepo: io.holonaut.helloserver.team.TeamRepository,
+    private val teamRepo: TeamRepository,
 ) {
 
     @GetMapping
