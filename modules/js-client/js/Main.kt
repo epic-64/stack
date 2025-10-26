@@ -142,11 +142,12 @@ private fun buildTodoListItem(todo: Todo, refresh: () -> Unit): HTMLLIElement {
     summary.appendChild(span)
 
     // progress bar (only if start + duration present)
+    var progressContainer: HTMLDivElement? = null
     if (todo.startAtEpochMillis != null && todo.durationMillis != null) {
         val start: Long = todo.startAtEpochMillis!!
         val duration: Long = todo.durationMillis!!
         val end = start + duration
-        val progressContainer = document.createElement("div") as HTMLDivElement
+        progressContainer = document.createElement("div") as HTMLDivElement
         progressContainer.className = "progressContainer"
         val progressFill = document.createElement("div") as HTMLDivElement
         progressFill.className = "progressFill"
@@ -168,7 +169,7 @@ private fun buildTodoListItem(todo: Todo, refresh: () -> Unit): HTMLLIElement {
         intervalHandle = window.setInterval({ updateBar() }, 1000)
         intervalHandle?.let { progressIntervals.add(it) }
         progressContainer.appendChild(progressFill)
-        summary.appendChild(progressContainer)
+        // no longer appended to summary here
     }
 
     val actions = document.createElement("div") as HTMLDivElement
@@ -256,6 +257,7 @@ private fun buildTodoListItem(todo: Todo, refresh: () -> Unit): HTMLLIElement {
     }
 
     li.appendChild(summary)
+    if (progressContainer != null) li.appendChild(progressContainer)
     li.appendChild(actions)
     return li
 }

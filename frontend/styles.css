@@ -188,17 +188,17 @@ body {
 }
 
 .todoTitle {
-  flex: 1 1 auto;
+  flex: 1 1 100%;
   min-width: 0; /* allow shrink */
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   overflow-wrap: anywhere; /* break extremely long words if needed */
 }
 .todoTitle.completed {
   color: var(--muted);
   text-decoration: line-through;
 }
+
+/* Force progress bar to its own visual row inside todo item */
+.todoItem > .progressContainer { display: block; width: 100%; margin-top: 6px; }
 
 .todoActions {
   display: none;
