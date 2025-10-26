@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.server.ResponseStatusException
+import java.time.Instant
 
 @RestController
 @RequestMapping("/api/todos")
@@ -36,21 +37,32 @@ class TodoController(
         return entity.toDto()
     }
 
-    data class CreateTodoRequest(val title: String, val completed: Boolean? = null, val teamIds: List<Long>? = null)
+    data class CreateTodoRequest(
+        val title: String,
+        val completed: Boolean? = null,
+        val teamIds: List<Long>? = null,
+        val startAtEpochMillis: Long? = null,
+        val durationMillis: Long? = null,
+    )
     data class UpdateTodoRequest(
         val title: String? = null,
         val completed: Boolean? = null,
-        val teamIds: List<Long>? = null
+        val teamIds: List<Long>? = null,
+        val startAtEpochMillis: Long? = null,
+        val durationMillis: Long? = null,
     )
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     fun create(@RequestBody req: CreateTodoRequest, @AuthenticationPrincipal principal: AppUserDetails): Todo {
         if (req.title.isBlank()) throw ResponseStatusException(HttpStatus.BAD_REQUEST, "title must not be blank")
+        if (req.durationMillis != null && req.durationMillis < 0) throw ResponseStatusException(HttpStatus.BAD_REQUEST, "durationMillis must be >= 0")
         val user = principal.user
         val entity = TodoEntity(title = req.title.trim(), completed = req.completed ?: false, createdBy = user)
         val teams = loadAndValidateTeams(req.teamIds, user)
         entity.teams.addAll(teams)
+        entity.startAt = req.startAtEpochMillis?.let { Instant.ofEpochMilli(it) }
+        entity.durationMillis = req.durationMillis
         return repo.save(entity).toDto()
     }
 
@@ -61,6 +73,7 @@ class TodoController(
         @AuthenticationPrincipal principal: AppUserDetails
     ): Todo {
         if (req.title.isBlank()) throw ResponseStatusException(HttpStatus.BAD_REQUEST, "title must not be blank")
+        if (req.durationMillis != null && req.durationMillis < 0) throw ResponseStatusException(HttpStatus.BAD_REQUEST, "durationMillis must be >= 0")
         val user = principal.user
         val entity =
             repo.findById(id).orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Todo $id not found") }
@@ -69,6 +82,8 @@ class TodoController(
         entity.completed = req.completed ?: false
         entity.teams.clear()
         entity.teams.addAll(loadAndValidateTeams(req.teamIds, user))
+        entity.startAt = req.startAtEpochMillis?.let { Instant.ofEpochMilli(it) }
+        entity.durationMillis = req.durationMillis
         return repo.save(entity).toDto()
     }
 
@@ -78,6 +93,7 @@ class TodoController(
         @RequestBody req: UpdateTodoRequest,
         @AuthenticationPrincipal principal: AppUserDetails
     ): Todo {
+        if (req.durationMillis != null && req.durationMillis < 0) throw ResponseStatusException(HttpStatus.BAD_REQUEST, "durationMillis must be >= 0")
         val user = principal.user
         val entity =
             repo.findById(id).orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Todo $id not found") }
@@ -88,6 +104,8 @@ class TodoController(
             entity.teams.clear()
             entity.teams.addAll(loadAndValidateTeams(req.teamIds, user))
         }
+        if (req.startAtEpochMillis != null) entity.startAt = Instant.ofEpochMilli(req.startAtEpochMillis)
+        if (req.durationMillis != null) entity.durationMillis = req.durationMillis
         return repo.save(entity).toDto()
     }
 
@@ -132,4 +150,7 @@ private fun TodoEntity.toDto(): Todo = Todo(
     createdAtEpochMillis = createdAt?.toEpochMilli(),
     updatedAtEpochMillis = updatedAt?.toEpochMilli(),
     teamIds = teams.mapNotNull { it.id }.sorted(),
+    startAtEpochMillis = startAt?.toEpochMilli(),
+    durationMillis = durationMillis,
+    dueAtEpochMillis = if (startAt != null && durationMillis != null) startAt!!.toEpochMilli() + durationMillis!! else null,
 )

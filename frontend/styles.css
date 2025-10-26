@@ -324,3 +324,6 @@ body {
     width: 8px;
   }
 }
+
+.progressContainer { margin-top:4px; width:100%; background:#e0e0e0; height:6px; border-radius:3px; overflow:hidden; }
+.progressFill { height:100%; background:#4caf50; width:0; transition:width .3s ease; }

@@ -1,12 +1,15 @@
 import io.holonaut.shared.Todo
 import io.holonaut.shared.User
 import kotlinx.browser.document
+import kotlinx.browser.window
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.w3c.dom.*
 import org.w3c.dom.events.KeyboardEvent
 import org.w3c.fetch.RequestInit
+import kotlin.js.Date
 import kotlin.js.json
+import kotlin.math.roundToInt
 
 private const val API_BASE = "http://localhost:8080/api/todos"
 
@@ -15,6 +18,8 @@ private data class CreateTodoRequest(val title: String, val completed: Boolean? 
 
 @Serializable
 private data class UpdateTodoRequest(val title: String? = null, val completed: Boolean? = null)
+
+private var progressIntervals: MutableList<Int> = mutableListOf()
 
 fun main() {
     val root = (document.getElementById("app") ?: document.body!!) as HTMLElement
@@ -108,6 +113,7 @@ private fun buildForm(): FormElements {
 
 // Render the list of todos into the provided UL element.
 private fun renderTodosInto(list: HTMLUListElement, todos: List<Todo>, refresh: () -> Unit) {
+    clearProgressIntervals()
     list.innerHTML = ""
     todos.forEach { todo ->
         list.appendChild(buildTodoListItem(todo, refresh))
@@ -129,6 +135,36 @@ private fun buildTodoListItem(todo: Todo, refresh: () -> Unit): HTMLLIElement {
     span.className = if (todo.completed) "todoTitle completed" else "todoTitle"
     span.textContent = todo.title
     summary.appendChild(span)
+
+    // progress bar (only if start + duration present)
+    if (todo.startAtEpochMillis != null && todo.durationMillis != null) {
+        val start: Long = todo.startAtEpochMillis!!
+        val duration: Long = todo.durationMillis!!
+        val end = start + duration
+        val progressContainer = document.createElement("div") as HTMLDivElement
+        progressContainer.className = "progressContainer"
+        val progressFill = document.createElement("div") as HTMLDivElement
+        progressFill.className = "progressFill"
+        var intervalHandle: Int? = null
+        fun updateBar() {
+            val now = Date.now().toLong()
+            val remainingPercent = when {
+                now <= start -> 100
+                now >= end -> 0
+                else -> (((end - now).toDouble() / (end - start).toDouble()) * 100).roundToInt()
+            }
+            progressFill.style.width = remainingPercent.coerceIn(0, 100).toString() + "%"
+            if (remainingPercent <= 0) {
+                intervalHandle?.let { window.clearInterval(it) }
+                intervalHandle = null
+            }
+        }
+        updateBar()
+        intervalHandle = window.setInterval({ updateBar() }, 1000)
+        intervalHandle?.let { progressIntervals.add(it) }
+        progressContainer.appendChild(progressFill)
+        summary.appendChild(progressContainer)
+    }
 
     val actions = document.createElement("div") as HTMLDivElement
     actions.className = "todoActions"
@@ -207,4 +243,9 @@ private fun toggleTodo(todo: Todo, done: () -> Unit) {
 
 private fun deleteTodo(id: Long, done: () -> Unit) {
     authedFetch("${API_BASE}/$id", RequestInit(method = "DELETE")).then { done() }
+}
+
+private fun clearProgressIntervals() {
+    progressIntervals.forEach { window.clearInterval(it) }
+    progressIntervals.clear()
 }

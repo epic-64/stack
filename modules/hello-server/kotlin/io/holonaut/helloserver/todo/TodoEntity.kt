@@ -12,6 +12,10 @@ class TodoEntity(
     var completed: Boolean = false,
     var createdAt: Instant? = null,
     var updatedAt: Instant? = null,
+    // optional start time for duration-based todos
+    var startAt: Instant? = null,
+    // optional duration in milliseconds
+    var durationMillis: Long? = null,
     @ManyToMany
     @JoinTable(
         name = "todo_teams",

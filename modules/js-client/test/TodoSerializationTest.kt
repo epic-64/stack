@@ -10,13 +10,16 @@ import io.kotest.matchers.string.shouldContain
 class TodoSerializationSpec : StringSpec({
     val json = Json // default configuration
 
-    "round trip serialization preserves all fields" {
+    "round trip serialization preserves all fields including scheduling" {
         val original = Todo(
             id = 42L,
             title = "Write JS client test",
             completed = true,
             createdAtEpochMillis = 111L,
             updatedAtEpochMillis = 222L,
+            startAtEpochMillis = 1000L,
+            durationMillis = 5000L,
+            dueAtEpochMillis = 6000L,
         )
         val encoded = json.encodeToString(original)
         val decoded = json.decodeFromString<Todo>(encoded)
@@ -26,6 +29,7 @@ class TodoSerializationSpec : StringSpec({
         // spot check a couple of fields explicitly for clarity
         decoded.id shouldBe 42L
         decoded.completed shouldBe true
+        decoded.dueAtEpochMillis shouldBe 6000L
     }
 
     "missing optional fields apply defaults" {
@@ -36,6 +40,9 @@ class TodoSerializationSpec : StringSpec({
         decoded.id.shouldBeNull()
         decoded.createdAtEpochMillis.shouldBeNull()
         decoded.updatedAtEpochMillis.shouldBeNull()
+        decoded.startAtEpochMillis.shouldBeNull()
+        decoded.durationMillis.shouldBeNull()
+        decoded.dueAtEpochMillis.shouldBeNull()
     }
 
     "explicit defaults serialize and deserialize identically" {

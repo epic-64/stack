@@ -10,4 +10,10 @@ data class Todo(
     val createdAtEpochMillis: Long? = null,
     val updatedAtEpochMillis: Long? = null,
     val teamIds: List<Long> = emptyList(),
+    // start instant in epoch millis (optional)
+    val startAtEpochMillis: Long? = null,
+    // duration in milliseconds (optional)
+    val durationMillis: Long? = null,
+    // computed due time (not stored in DB) – server fills when start+duration present
+    val dueAtEpochMillis: Long? = null,
 )
