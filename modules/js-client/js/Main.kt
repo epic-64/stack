@@ -14,10 +14,10 @@ import kotlin.math.roundToInt
 private const val API_BASE = "http://localhost:8080/api/todos"
 
 @Serializable
-private data class CreateTodoRequest(val title: String, val completed: Boolean? = null)
+private data class CreateTodoRequest(val title: String, val completed: Boolean? = null, val startAtEpochMillis: Long? = null, val durationMillis: Long? = null)
 
 @Serializable
-private data class UpdateTodoRequest(val title: String? = null, val completed: Boolean? = null)
+private data class UpdateTodoRequest(val title: String? = null, val completed: Boolean? = null, val startAtEpochMillis: Long? = null, val durationMillis: Long? = null)
 
 private var progressIntervals: MutableList<Int> = mutableListOf()
 
@@ -67,8 +67,8 @@ private fun renderApp(root: HTMLElement, user: User) {
         fetchTodos { todos -> renderTodosInto(list, todos, refresh) }
     }
 
-    form.onSubmit { titleText ->
-        createTodo(titleText) { refresh() }
+    form.onSubmit { titleText, startAt, durationMs ->
+        createTodo(titleText, startAt, durationMs) { refresh() }
     }
 
     refresh()
@@ -77,8 +77,8 @@ private fun renderApp(root: HTMLElement, user: User) {
 // -------------------------------------------------------------
 // Existing todo UI helpers (mostly unchanged except auth wrapper on network)
 // -------------------------------------------------------------
-private data class FormElements(val container: HTMLElement, val onSubmit: (((String) -> Unit) -> Unit)) {
-    fun onSubmit(handler: (String) -> Unit) = onSubmit.invoke(handler)
+private data class FormElements(val container: HTMLElement, val onSubmit: (((String, Long?, Long?) -> Unit) -> Unit)) {
+    fun onSubmit(handler: (String, Long?, Long?) -> Unit) = onSubmit.invoke(handler)
 }
 
 // Build the input form (title box + add button)
@@ -89,24 +89,45 @@ private fun buildForm(): FormElements {
     input.placeholder = "What needs to be done?"
     input.size = 30
     input.className = "textInput"
+
+    val startInput = document.createElement("input") as HTMLInputElement
+    startInput.type = "datetime-local"
+    startInput.className = "textInput"
+    startInput.placeholder = "Start (optional)"
+
+    val durationInput = document.createElement("input") as HTMLInputElement
+    durationInput.type = "number"
+    durationInput.min = "0"
+    durationInput.placeholder = "Duration min"
+    durationInput.className = "textInput"
+    durationInput.style.maxWidth = "120px"
+
     val button = document.createElement("button") as HTMLButtonElement
     button.textContent = "Add"
     button.className = "btn btnPrimary"
 
     container.appendChild(input)
+    container.appendChild(startInput)
+    container.appendChild(durationInput)
     container.appendChild(button)
 
-    var submitHandler: (String) -> Unit = {}
+    var submitHandler: (String, Long?, Long?) -> Unit = { _, _, _ -> }
     fun submit() {
         val text = input.value.trim()
         if (text.isNotEmpty()) {
-            submitHandler(text)
+            val startAt = startInput.value.trim().let { if (it.isNotEmpty()) Date(it).getTime().toLong() else null }
+            val durationMs = durationInput.value.trim().let { if (it.isNotEmpty()) (it.toLongOrNull() ?: 0L) * 60000L else null }
+            submitHandler(text, startAt, durationMs)
             input.value = ""
+            startInput.value = ""
+            durationInput.value = ""
             input.focus()
         }
     }
     button.onclick = { submit() }
     input.onkeypress = { e -> if (e.key == "Enter") submit() }
+    startInput.onkeypress = { e -> if (e.key == "Enter") submit() }
+    durationInput.onkeypress = { e -> if (e.key == "Enter") submit() }
 
     return FormElements(container) { handler -> submitHandler = handler }
 }
@@ -221,8 +242,8 @@ private fun fetchTodos(done: (List<Todo>) -> Unit) {
         }
 }
 
-private fun createTodo(title: String, done: () -> Unit) {
-    val body = Json.encodeToString(CreateTodoRequest(title = title))
+private fun createTodo(title: String, startAtEpochMillis: Long?, durationMillis: Long?, done: () -> Unit) {
+    val body = Json.encodeToString(CreateTodoRequest(title = title, startAtEpochMillis = startAtEpochMillis, durationMillis = durationMillis))
     val request = RequestInit(
         method = "POST",
         headers = json("Content-Type" to "application/json"),
