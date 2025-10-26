@@ -5,7 +5,6 @@ import kotlinx.browser.window
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.w3c.dom.*
-import org.w3c.dom.events.KeyboardEvent
 import org.w3c.fetch.RequestInit
 import kotlin.js.Date
 import kotlin.js.json
@@ -14,7 +13,10 @@ import kotlin.math.roundToInt
 private const val API_BASE = "http://localhost:8080/api/todos"
 
 @Serializable
-private data class CreateTodoRequest(val title: String, val completed: Boolean? = null) // removed scheduling from creation
+private data class CreateTodoRequest(
+    val title: String,
+    val completed: Boolean? = null
+)
 
 @Serializable
 private data class UpdateTodoRequest(
@@ -78,7 +80,10 @@ private fun renderApp(root: HTMLElement, user: User) {
 // -------------------------------------------------------------
 // Existing todo UI helpers (mostly unchanged except auth wrapper on network)
 // -------------------------------------------------------------
-private data class FormElements(val container: HTMLElement, val onSubmit: (((String) -> Unit) -> Unit)) { // simplified signature
+private data class FormElements(
+    val container: HTMLElement,
+    val onSubmit: (((String) -> Unit) -> Unit)
+) { // simplified signature
     fun onSubmit(handler: (String) -> Unit) = onSubmit.invoke(handler)
 }
 
@@ -193,8 +198,10 @@ private fun buildTodoListItem(todo: Todo, refresh: () -> Unit): HTMLLIElement {
         onclick = {
             val id = todo.id
             if (id != null) {
-                val startAtMs = startInput.value.trim().let { if (it.isNotEmpty()) Date(it).getTime().toLong() else null }
-                val durationMs = durationInput.value.trim().let { if (it.isNotEmpty()) (it.toLongOrNull() ?: 0L) * 60000L else null }
+                val startAtMs =
+                    startInput.value.trim().let { if (it.isNotEmpty()) Date(it).getTime().toLong() else null }
+                val durationMs =
+                    durationInput.value.trim().let { if (it.isNotEmpty()) (it.toLongOrNull() ?: 0L) * 60000L else null }
                 patchSchedule(id, startAtMs, durationMs) { refresh() }
             }
         }
@@ -213,9 +220,8 @@ private fun buildTodoListItem(todo: Todo, refresh: () -> Unit): HTMLLIElement {
     }
     summary.onclick = { toggleExpanded() }
     summary.onkeydown = { e ->
-        val ke = e as KeyboardEvent
-        if (ke.key == "Enter" || ke.key == " ") {
-            ke.preventDefault()
+        if (e.key == "Enter" || e.key == " ") {
+            e.preventDefault()
             toggleExpanded()
         }
     }
@@ -269,7 +275,8 @@ private fun deleteTodo(id: Long, done: () -> Unit) {
 }
 
 private fun patchSchedule(id: Long, startAtEpochMillis: Long?, durationMillis: Long?, done: () -> Unit) {
-    val body = Json.encodeToString(UpdateTodoRequest(startAtEpochMillis = startAtEpochMillis, durationMillis = durationMillis))
+    val body =
+        Json.encodeToString(UpdateTodoRequest(startAtEpochMillis = startAtEpochMillis, durationMillis = durationMillis))
     val request = RequestInit(
         method = "PATCH",
         headers = json("Content-Type" to "application/json"),
