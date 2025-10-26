@@ -14,10 +14,15 @@ import kotlin.math.roundToInt
 private const val API_BASE = "http://localhost:8080/api/todos"
 
 @Serializable
-private data class CreateTodoRequest(val title: String, val completed: Boolean? = null, val startAtEpochMillis: Long? = null, val durationMillis: Long? = null)
+private data class CreateTodoRequest(val title: String, val completed: Boolean? = null) // removed scheduling from creation
 
 @Serializable
-private data class UpdateTodoRequest(val title: String? = null, val completed: Boolean? = null, val startAtEpochMillis: Long? = null, val durationMillis: Long? = null)
+private data class UpdateTodoRequest(
+    val title: String? = null,
+    val completed: Boolean? = null,
+    val startAtEpochMillis: Long? = null,
+    val durationMillis: Long? = null,
+)
 
 private var progressIntervals: MutableList<Int> = mutableListOf()
 
@@ -67,8 +72,8 @@ private fun renderApp(root: HTMLElement, user: User) {
         fetchTodos { todos -> renderTodosInto(list, todos, refresh) }
     }
 
-    form.onSubmit { titleText, startAt, durationMs ->
-        createTodo(titleText, startAt, durationMs) { refresh() }
+    form.onSubmit { titleText ->
+        createTodo(titleText) { refresh() }
     }
 
     refresh()
@@ -77,8 +82,8 @@ private fun renderApp(root: HTMLElement, user: User) {
 // -------------------------------------------------------------
 // Existing todo UI helpers (mostly unchanged except auth wrapper on network)
 // -------------------------------------------------------------
-private data class FormElements(val container: HTMLElement, val onSubmit: (((String, Long?, Long?) -> Unit) -> Unit)) {
-    fun onSubmit(handler: (String, Long?, Long?) -> Unit) = onSubmit.invoke(handler)
+private data class FormElements(val container: HTMLElement, val onSubmit: (((String) -> Unit) -> Unit)) { // simplified signature
+    fun onSubmit(handler: (String) -> Unit) = onSubmit.invoke(handler)
 }
 
 // Build the input form (title box + add button)
@@ -89,45 +94,24 @@ private fun buildForm(): FormElements {
     input.placeholder = "What needs to be done?"
     input.size = 30
     input.className = "textInput"
-
-    val startInput = document.createElement("input") as HTMLInputElement
-    startInput.type = "datetime-local"
-    startInput.className = "textInput"
-    startInput.placeholder = "Start (optional)"
-
-    val durationInput = document.createElement("input") as HTMLInputElement
-    durationInput.type = "number"
-    durationInput.min = "0"
-    durationInput.placeholder = "Duration min"
-    durationInput.className = "textInput"
-    durationInput.style.maxWidth = "120px"
-
     val button = document.createElement("button") as HTMLButtonElement
     button.textContent = "Add"
     button.className = "btn btnPrimary"
 
     container.appendChild(input)
-    container.appendChild(startInput)
-    container.appendChild(durationInput)
     container.appendChild(button)
 
-    var submitHandler: (String, Long?, Long?) -> Unit = { _, _, _ -> }
+    var submitHandler: (String) -> Unit = {}
     fun submit() {
         val text = input.value.trim()
         if (text.isNotEmpty()) {
-            val startAt = startInput.value.trim().let { if (it.isNotEmpty()) Date(it).getTime().toLong() else null }
-            val durationMs = durationInput.value.trim().let { if (it.isNotEmpty()) (it.toLongOrNull() ?: 0L) * 60000L else null }
-            submitHandler(text, startAt, durationMs)
+            submitHandler(text)
             input.value = ""
-            startInput.value = ""
-            durationInput.value = ""
             input.focus()
         }
     }
     button.onclick = { submit() }
     input.onkeypress = { e -> if (e.key == "Enter") submit() }
-    startInput.onkeypress = { e -> if (e.key == "Enter") submit() }
-    durationInput.onkeypress = { e -> if (e.key == "Enter") submit() }
 
     return FormElements(container) { handler -> submitHandler = handler }
 }
@@ -195,7 +179,7 @@ private fun buildTodoListItem(todo: Todo, refresh: () -> Unit): HTMLLIElement {
     toggleBtn.textContent = if (todo.completed) "Mark active" else "Mark done"
     toggleBtn.onclick = { toggleTodo(todo) { refresh() } }
 
-    val del = document.createElement("button") as HTMLButtonElement
+    val del = document.createElement("button") as HTMLButtonElement // fixed type
     del.className = "btn btnDanger"
     del.textContent = "Delete"
     del.onclick = {
@@ -203,8 +187,60 @@ private fun buildTodoListItem(todo: Todo, refresh: () -> Unit): HTMLLIElement {
         if (id != null) deleteTodo(id) { refresh() }
     }
 
+    // Scheduling edit UI (start + duration) inside expanded actions
+    val scheduleWrapper = document.createElement("div") as HTMLDivElement
+    scheduleWrapper.style.display = "flex"
+    scheduleWrapper.style.flexDirection = "column"
+    scheduleWrapper.style.setProperty("gap", "6px")
+    scheduleWrapper.style.flex = "1 1 100%"
+
+    val scheduleRow = document.createElement("div") as HTMLDivElement
+    scheduleRow.style.display = "flex"
+    scheduleRow.style.setProperty("gap", "8px")
+    scheduleRow.style.flexWrap = "wrap"
+    scheduleRow.style.alignItems = "center"
+
+    val startInput = document.createElement("input") as HTMLInputElement
+    startInput.type = "datetime-local"
+    startInput.className = "textInput"
+    startInput.placeholder = "Start"
+    startInput.style.maxWidth = "220px"
+    val existingStart = todo.startAtEpochMillis
+    if (existingStart != null) {
+        startInput.value = millisToLocalDateTimeString(existingStart)
+    }
+
+    val durationInput = document.createElement("input") as HTMLInputElement
+    durationInput.type = "number"
+    durationInput.min = "0"
+    durationInput.placeholder = "Duration (min)"
+    durationInput.className = "textInput"
+    durationInput.style.maxWidth = "140px"
+    val existingDuration = todo.durationMillis
+    if (existingDuration != null) {
+        durationInput.value = (existingDuration / 60000L).toString()
+    }
+
+    val saveBtn = document.createElement("button") as HTMLButtonElement
+    saveBtn.className = "btn btnPrimary"
+    saveBtn.textContent = "Save schedule"
+    saveBtn.onclick = {
+        val id = todo.id
+        if (id != null) {
+            val startAtMs = startInput.value.trim().let { if (it.isNotEmpty()) Date(it).getTime().toLong() else null }
+            val durationMs = durationInput.value.trim().let { if (it.isNotEmpty()) (it.toLongOrNull() ?: 0L) * 60000L else null }
+            patchSchedule(id, startAtMs, durationMs) { refresh() }
+        }
+    }
+
+    scheduleRow.appendChild(startInput)
+    scheduleRow.appendChild(durationInput)
+    scheduleRow.appendChild(saveBtn)
+    scheduleWrapper.appendChild(scheduleRow)
+
     actions.appendChild(toggleBtn)
     actions.appendChild(del)
+    actions.appendChild(scheduleWrapper)
 
     fun toggleExpanded() {
         val expanded = li.classList.toggle("expanded")
@@ -242,8 +278,8 @@ private fun fetchTodos(done: (List<Todo>) -> Unit) {
         }
 }
 
-private fun createTodo(title: String, startAtEpochMillis: Long?, durationMillis: Long?, done: () -> Unit) {
-    val body = Json.encodeToString(CreateTodoRequest(title = title, startAtEpochMillis = startAtEpochMillis, durationMillis = durationMillis))
+private fun createTodo(title: String, done: () -> Unit) {
+    val body = Json.encodeToString(CreateTodoRequest(title = title))
     val request = RequestInit(
         method = "POST",
         headers = json("Content-Type" to "application/json"),
@@ -266,7 +302,28 @@ private fun deleteTodo(id: Long, done: () -> Unit) {
     authedFetch("${API_BASE}/$id", RequestInit(method = "DELETE")).then { done() }
 }
 
+private fun patchSchedule(id: Long, startAtEpochMillis: Long?, durationMillis: Long?, done: () -> Unit) {
+    val body = Json.encodeToString(UpdateTodoRequest(startAtEpochMillis = startAtEpochMillis, durationMillis = durationMillis))
+    val request = RequestInit(
+        method = "PATCH",
+        headers = json("Content-Type" to "application/json"),
+        body = body
+    )
+    authedFetch("${API_BASE}/$id", request).then { done() }
+}
+
 private fun clearProgressIntervals() {
     progressIntervals.forEach { window.clearInterval(it) }
     progressIntervals.clear()
+}
+
+private fun millisToLocalDateTimeString(ms: Long): String {
+    val d = Date(ms.toDouble())
+    fun Int.pad2() = if (this < 10) "0$this" else toString()
+    val year = d.getFullYear()
+    val month = (d.getMonth() + 1).pad2()
+    val day = d.getDate().pad2()
+    val hour = d.getHours().pad2()
+    val minute = d.getMinutes().pad2()
+    return "$year-$month-$day" + "T" + "$hour:$minute"
 }
