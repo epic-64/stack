@@ -1,6 +1,7 @@
 # stack2
 
-## Run server
+## Compile and run server
+Remember to rerun this every time server code changes.
 ```bash
 ./gradlew startServer
 ```

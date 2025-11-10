@@ -46,9 +46,8 @@ class SecurityConfig(
     }
 
     @Bean
-    fun filterChain(http: HttpSecurity): SecurityFilterChain {
-        http
-            .csrf { it.disable() }
+    fun filterChain(http: HttpSecurity): SecurityFilterChain =
+        http.csrf { it.disable() }
             .cors { } // enable CORS using the above configuration
             .authorizeHttpRequests { auth ->
                 auth
@@ -56,8 +55,7 @@ class SecurityConfig(
                     .anyRequest().authenticated()
             }
             .httpBasic(Customizer.withDefaults())
-        return http.build()
-    }
+            .build()
 }
 
 class AppUserDetails(val user: UserEntity) : UserDetails {
