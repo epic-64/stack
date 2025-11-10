@@ -2,7 +2,7 @@ We are building a todolist application in a Kotlin Multiplatform project.
 All modules live in the modules directory.
 IN gradle commands, omit the modules prefix, e.g.
 ```
-./gradlew :hello-server:bootRun
+./gradlew :server:bootRun
 ./gradlew :js-client:jsBrowserDevelopmentWebpack
 ```
 

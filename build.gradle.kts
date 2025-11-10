@@ -1,11 +1,11 @@
 // Root-level Gradle build file
 // Adds convenience tasks to run the backend and watch/rebuild the JS client.
 
-// This task simply delegates to the hello-server module's bootRun task provided by the Spring Boot plugin.
+// This task simply delegates to the server module's bootRun task provided by the Spring Boot plugin.
 tasks.register("startServer") {
     group = "application"
-    description = "Starts the Spring Boot server in :hello-server via bootRun."
-    dependsOn(":hello-server:bootRun")
+    description = "Starts the Spring Boot server in :server via bootRun."
+    dependsOn(":server:bootRun")
 }
 
 // Use Gradle's continuous mode to keep watching: `./gradlew devJs --continuous`
