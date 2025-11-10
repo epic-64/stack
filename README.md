@@ -11,6 +11,12 @@ Remember to rerun this every time server code changes.
 ./gradlew devJs --continuous
 ```
 
+## Fix JS
+If changes in Kotlin code do not show up in JS, run this.
+```bash
+./gradlew :js-client:clean :js-client:jsBrowserDevelopmentWebpack --rerun-tasks
+```
+
 ## Build JS (prod)
 ```bash
 ./gradlew prodJs
