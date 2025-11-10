@@ -1,5 +1,10 @@
 We are building a todolist application in a Kotlin Multiplatform project.
 All modules live in the modules directory.
+IN gradle commands, omit the modules prefix, e.g.
+```
+./gradlew :hello-server:bootRun
+./gradlew :js-client:jsBrowserDevelopmentWebpack
+```
 
 Please, respect the author. You should not touch any code that is not directly related to your task.
 Leave the coding style alone. Leave comments alone. Leave formatting alone.

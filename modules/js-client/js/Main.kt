@@ -180,11 +180,79 @@ private fun buildTodoListItem(todo: Todo, refresh: () -> Unit): HTMLLIElement {
     // Scheduling edit UI (start + duration) inside expanded actions
     val scheduleWrapper = el<HTMLDivElement>("div", "scheduleWrapper")
     val scheduleRow = el<HTMLDivElement>("div", "scheduleRow")
-    val startInput = el<HTMLInputElement>("input", "textInput scheduleStartInput") {
-        type = "datetime-local"
-        placeholder = "Start"
+    // Replaced native datetime-local with separate date + time selects
+    val dateInput = el<HTMLInputElement>("input", "textInput scheduleDateInput") {
+        type = "date"
+        placeholder = "Date"
         val existingStart = todo.startAtEpochMillis
-        if (existingStart != null) value = millisToLocalDateTimeString(existingStart)
+        if (existingStart != null) {
+            val dt = millisToLocalDateTimeString(existingStart)
+            val parts = dt.split("T")
+            if (parts.size == 2) value = parts[0]
+        }
+    }
+    val hourSelect = el<HTMLSelectElement>("select", "textInput scheduleHourSelect") {
+        val existingStart = todo.startAtEpochMillis
+        (0..23).forEach { h ->
+            val opt = document.createElement("option") as HTMLOptionElement
+            opt.value = h.toString().padStart(2, '0')
+            opt.textContent = h.toString().padStart(2, '0')
+            appendChild(opt)
+        }
+        if (existingStart != null) {
+            val dt = millisToLocalDateTimeString(existingStart)
+            val parts = dt.split("T")
+            if (parts.size == 2) {
+                val timeParts = parts[1].split(":")
+                if (timeParts.size >= 2) value = timeParts[0]
+            }
+        } else {
+            value = "" // blank by default
+        }
+    }
+    val minuteSelect = el<HTMLSelectElement>("select", "textInput scheduleMinuteSelect") {
+        val existingStart = todo.startAtEpochMillis
+        (0..55 step 5).forEach { m ->
+            val opt = document.createElement("option") as HTMLOptionElement
+            opt.value = m.toString().padStart(2, '0')
+            opt.textContent = m.toString().padStart(2, '0')
+            appendChild(opt)
+        }
+        if (existingStart != null) {
+            val dt = millisToLocalDateTimeString(existingStart)
+            val parts = dt.split("T")
+            if (parts.size == 2) {
+                val timeParts = parts[1].split(":")
+                if (timeParts.size >= 2) value = timeParts[1]
+            }
+        } else {
+            value = "" // blank by default
+        }
+    }
+    val nowBtn = el<HTMLButtonElement>("button", "btn btnSecondary") {
+        textContent = "Now"
+        onclick = {
+            val d = Date()
+            fun Int.pad2() = if (this < 10) "0$this" else toString()
+            val year = d.getFullYear()
+            val month = (d.getMonth() + 1).pad2()
+            val day = d.getDate().pad2()
+            val hour = d.getHours().pad2()
+            val minuteRaw = d.getMinutes()
+            val minuteRounded = (minuteRaw / 5) * 5 // round down to nearest 5 for menu
+            val minute = minuteRounded.pad2()
+            dateInput.value = "$year-$month-$day"
+            hourSelect.value = hour
+            minuteSelect.value = minute
+        }
+    }
+    val clearBtn = el<HTMLButtonElement>("button", "btn btnSecondary") {
+        textContent = "Clear"
+        onclick = {
+            dateInput.value = ""
+            hourSelect.value = ""
+            minuteSelect.value = ""
+        }
     }
     val durationInput = el<HTMLInputElement>("input", "textInput scheduleDurationInput") {
         type = "number"
@@ -198,15 +266,21 @@ private fun buildTodoListItem(todo: Todo, refresh: () -> Unit): HTMLLIElement {
         onclick = {
             val id = todo.id
             if (id != null) {
-                val startAtMs =
-                    startInput.value.trim().let { if (it.isNotEmpty()) Date(it).getTime().toLong() else null }
+                val startAtMs = if (dateInput.value.trim().isNotEmpty() && hourSelect.value.trim().isNotEmpty() && minuteSelect.value.trim().isNotEmpty()) {
+                    val dtString = dateInput.value.trim() + "T" + hourSelect.value.trim() + ":" + minuteSelect.value.trim()
+                    Date(dtString).getTime().toLong()
+                } else null
                 val durationMs =
                     durationInput.value.trim().let { if (it.isNotEmpty()) (it.toLongOrNull() ?: 0L) * 60000L else null }
                 patchSchedule(id, startAtMs, durationMs) { refresh() }
             }
         }
     }
-    scheduleRow.appendChild(startInput)
+    scheduleRow.appendChild(dateInput)
+    scheduleRow.appendChild(hourSelect)
+    scheduleRow.appendChild(minuteSelect)
+    scheduleRow.appendChild(nowBtn)
+    scheduleRow.appendChild(clearBtn)
     scheduleRow.appendChild(durationInput)
     scheduleRow.appendChild(saveBtn)
     scheduleWrapper.appendChild(scheduleRow)
