@@ -8,10 +8,15 @@ tasks.register("startServer") {
     dependsOn(":hello-server:bootRun")
 }
 
-// Watches the js-client module and rebuilds the development bundle on file changes.
-// Use Gradle's continuous mode to keep watching: `./gradlew watchJs --continuous`
-tasks.register("watchJs") {
+// Use Gradle's continuous mode to keep watching: `./gradlew devJs --continuous`
+tasks.register("devJs") {
     group = "application"
     description = "Watches :js-client sources and rebuilds frontend/gen/app.js on changes."
     dependsOn(":js-client:jsBrowserDevelopmentWebpack")
+}
+
+tasks.register("prodJs") {
+    group = "application"
+    description = "Builds the production version of the JS client to frontend/gen/app.js."
+    dependsOn(":js-client:jsBrowserProductionWebpack")
 }

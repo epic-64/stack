@@ -221,6 +221,7 @@ private fun buildTodoListItem(todo: Todo, refresh: () -> Unit): HTMLLIElement {
     summary.onclick = { toggleExpanded() }
     summary.onkeydown = { e ->
         if (e.key == "Enter" || e.key == " ") {
+            console.log("Enter/Space pressed on summary")
             e.preventDefault()
             toggleExpanded()
         }

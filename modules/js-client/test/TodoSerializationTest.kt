@@ -6,6 +6,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.string.shouldContain
+import kotlin.test.assertEquals
 
 class TodoSerializationSpec : StringSpec({
     val json = Json // default configuration
@@ -27,7 +28,7 @@ class TodoSerializationSpec : StringSpec({
         decoded shouldBe original
         encoded shouldContain "Write JS client test"
         // spot check a couple of fields explicitly for clarity
-        decoded.id shouldBe 42L
+        decoded.id shouldBe 43L
         decoded.completed shouldBe true
         decoded.dueAtEpochMillis shouldBe 6000L
     }
