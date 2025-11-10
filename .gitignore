@@ -49,3 +49,4 @@ bin/
 
 ### Database ###
 /data/todo-db.mv.db
+/modules/hello-server/data/todo-db.mv.db
