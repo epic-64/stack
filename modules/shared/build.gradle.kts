@@ -24,13 +24,6 @@ kotlin {
                 implementation(libs.kotlinxSerialization)
             }
         }
-        val commonTest by getting {
-            kotlin.srcDirs("common-test")
-            dependencies {
-                implementation(libs.kotestAssertionsCore)
-                implementation(libs.kotestFrameworkEngine)
-            }
-        }
         val jvmMain by getting
         val jvmTest by getting {
             kotlin.srcDirs("jvm-test")
