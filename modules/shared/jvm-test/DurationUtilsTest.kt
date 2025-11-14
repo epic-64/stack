@@ -31,13 +31,19 @@ class DurationUtilsSpec : StringSpec({
     }
 
     "parseDurationText should parse combined units" {
-        val expected = 2 * 7 * 24 * 60 * 60 * 1000L + 1 * 24 * 60 * 60 * 1000L + 3 * 60 * 60 * 1000L
-        parseDurationText("2w 1d 3h") shouldBe expected
+        val week = 7 * 24 * 60 * 60 * 1000L
+        val day = 24 * 60 * 60 * 1000L
+        val hour = 60 * 60 * 1000L
+
+        parseDurationText("2w 1d 3h") shouldBe (2 * week + 1 * day + 3 * hour)
     }
 
     "parseDurationText should handle no spaces" {
-        val expected = 2 * 7 * 24 * 60 * 60 * 1000L + 1 * 24 * 60 * 60 * 1000L + 3 * 60 * 60 * 1000L
-        parseDurationText("2w1d3h") shouldBe expected
+        val week = 7 * 24 * 60 * 60 * 1000L
+        val day = 24 * 60 * 60 * 1000L
+        val hour = 60 * 60 * 1000L
+
+        parseDurationText("2w1d3h") shouldBe (2 * week + 1 * day + 3 * hour)
     }
 
     "parseDurationText should return null for invalid input" {
@@ -56,6 +62,11 @@ class DurationUtilsSpec : StringSpec({
     "formatDurationMillis should format hours and minutes" {
         val millis = 5 * 60 * 60 * 1000L + 30 * 60 * 1000L
         formatDurationMillis(millis) shouldBe "5h 30m"
+    }
+
+    "formatDurationMillis should format 61 seconds as 1m 1s" {
+        val millis = 61 * 1000L
+        formatDurationMillis(millis) shouldBe "1m 1s"
     }
 
     "formatDurationMillis should return empty for null or zero" {

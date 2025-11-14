@@ -36,7 +36,7 @@ fun parseDurationText(text: String?): Long? {
 
 /**
  * Formats milliseconds into a human-readable duration string.
- * Uses the largest units possible (weeks, days, hours, minutes).
+ * Uses the largest units possible (weeks, days, hours, minutes, seconds).
  */
 fun formatDurationMillis(millis: Long?): String {
     if (millis == null || millis <= 0) return ""
@@ -65,8 +65,13 @@ fun formatDurationMillis(millis: Long?): String {
     val minutes = remaining / (60 * 1000)
     if (minutes > 0) {
         parts.add("${minutes}m")
+        remaining %= (60 * 1000)
+    }
+
+    val seconds = remaining / 1000
+    if (seconds > 0) {
+        parts.add("${seconds}s")
     }
     
     return parts.joinToString(" ")
 }
-
