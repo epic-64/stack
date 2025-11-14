@@ -28,6 +28,20 @@ private data class UpdateTodoRequest(
 
 private var progressIntervals: MutableList<Int> = mutableListOf()
 
+private fun Int.pad2() = if (this < 10) "0$this" else toString()
+
+private data class ParsedDateTime(val date: String, val hour: String, val minute: String)
+
+private fun parseMillisToDateTime(ms: Long): ParsedDateTime {
+    val d = Date(ms.toDouble())
+    val year = d.getFullYear()
+    val month = (d.getMonth() + 1).pad2()
+    val day = d.getDate().pad2()
+    val hour = d.getHours().pad2()
+    val minute = d.getMinutes().pad2()
+    return ParsedDateTime("$year-$month-$day", hour, minute)
+}
+
 private inline fun <reified T : HTMLElement> el(tag: String, classes: String? = null, block: T.() -> Unit = {}): T {
     val node = document.createElement(tag) as T
     if (!classes.isNullOrBlank()) node.className = classes
@@ -136,32 +150,31 @@ private fun buildTodoListItem(todo: Todo, refresh: () -> Unit): HTMLLIElement {
     summary.appendChild(span)
 
     // progress bar (only if start + duration present)
-    var progressContainer: HTMLDivElement? = null
-    if (todo.startAtEpochMillis != null && todo.durationMillis != null) {
-        val start: Long = todo.startAtEpochMillis!!
-        val duration: Long = todo.durationMillis!!
-        val end = start + duration
-        progressContainer = el<HTMLDivElement>("div", "progressContainer")
-        val progressFill = el<HTMLDivElement>("div", "progressFill")
-        var intervalHandle: Int? = null
-        fun updateBar() {
-            val now = Date.now().toLong()
-            val remainingPercent = when {
-                now <= start -> 100
-                now >= end -> 0
-                else -> (((end - now).toDouble() / (end - start).toDouble()) * 100).roundToInt()
-            }
-            progressFill.style.width = remainingPercent.coerceIn(0, 100).toString() + "%"
-            if (remainingPercent <= 0) {
-                intervalHandle?.let { window.clearInterval(it) }
-                intervalHandle = null
+    val progressContainer = todo.startAtEpochMillis?.let { start ->
+        todo.durationMillis?.let { duration ->
+            val end = start + duration
+            el<HTMLDivElement>("div", "progressContainer").apply {
+                val progressFill = el<HTMLDivElement>("div", "progressFill")
+                var intervalHandle: Int? = null
+                fun updateBar() {
+                    val now = Date.now().toLong()
+                    val remainingPercent = when {
+                        now <= start -> 100
+                        now >= end -> 0
+                        else -> (((end - now).toDouble() / (end - start).toDouble()) * 100).roundToInt()
+                    }
+                    progressFill.style.width = "${remainingPercent.coerceIn(0, 100)}%"
+                    if (remainingPercent <= 0) {
+                        intervalHandle?.let { window.clearInterval(it) }
+                        intervalHandle = null
+                    }
+                }
+                updateBar()
+                intervalHandle = window.setInterval({ updateBar() }, 1000)
+                intervalHandle?.let { progressIntervals.add(it) }
+                appendChild(progressFill)
             }
         }
-        updateBar()
-        intervalHandle = window.setInterval({ updateBar() }, 1000)
-        intervalHandle?.let { progressIntervals.add(it) }
-        progressContainer.appendChild(progressFill)
-        // no longer appended to summary here
     }
 
     val actions = el<HTMLDivElement>("div", "todoActions")
@@ -172,8 +185,7 @@ private fun buildTodoListItem(todo: Todo, refresh: () -> Unit): HTMLLIElement {
     val del = el<HTMLButtonElement>("button", "btn btnDanger") {
         textContent = "Delete"
         onclick = {
-            val id = todo.id
-            if (id != null) deleteTodo(id) { refresh() }
+            todo.id?.let { id -> deleteTodo(id) { refresh() } }
         }
     }
 
@@ -184,64 +196,42 @@ private fun buildTodoListItem(todo: Todo, refresh: () -> Unit): HTMLLIElement {
     val dateInput = el<HTMLInputElement>("input", "textInput scheduleDateInput") {
         type = "date"
         placeholder = "Date"
-        val existingStart = todo.startAtEpochMillis
-        if (existingStart != null) {
-            val dt = millisToLocalDateTimeString(existingStart)
-            val parts = dt.split("T")
-            if (parts.size == 2) value = parts[0]
+        todo.startAtEpochMillis?.let {
+            value = parseMillisToDateTime(it).date
         }
     }
     val hourSelect = el<HTMLSelectElement>("select", "textInput scheduleHourSelect") {
-        val existingStart = todo.startAtEpochMillis
         (0..23).forEach { h ->
             val opt = document.createElement("option") as HTMLOptionElement
-            opt.value = h.toString().padStart(2, '0')
-            opt.textContent = h.toString().padStart(2, '0')
+            opt.value = h.pad2()
+            opt.textContent = h.pad2()
             appendChild(opt)
         }
-        if (existingStart != null) {
-            val dt = millisToLocalDateTimeString(existingStart)
-            val parts = dt.split("T")
-            if (parts.size == 2) {
-                val timeParts = parts[1].split(":")
-                if (timeParts.size >= 2) value = timeParts[0]
-            }
-        } else {
-            value = "" // blank by default
-        }
+        value = todo.startAtEpochMillis?.let { parseMillisToDateTime(it).hour } ?: ""
     }
     val minuteSelect = el<HTMLSelectElement>("select", "textInput scheduleMinuteSelect") {
-        val existingStart = todo.startAtEpochMillis
         (0..55 step 5).forEach { m ->
             val opt = document.createElement("option") as HTMLOptionElement
-            opt.value = m.toString().padStart(2, '0')
-            opt.textContent = m.toString().padStart(2, '0')
+            opt.value = m.pad2()
+            opt.textContent = m.pad2()
             appendChild(opt)
         }
-        if (existingStart != null) {
-            val dt = millisToLocalDateTimeString(existingStart)
-            val parts = dt.split("T")
-            if (parts.size == 2) {
-                val timeParts = parts[1].split(":")
-                if (timeParts.size >= 2) value = timeParts[1]
-            }
-        } else {
-            value = "" // blank by default
-        }
+        value = todo.startAtEpochMillis?.let { parseMillisToDateTime(it).minute } ?: ""
     }
     val nowBtn = el<HTMLButtonElement>("button", "btn btnSecondary") {
         textContent = "Now"
         onclick = {
-            val d = Date()
-            fun Int.pad2() = if (this < 10) "0$this" else toString()
-            val year = d.getFullYear()
-            val month = (d.getMonth() + 1).pad2()
-            val day = d.getDate().pad2()
-            val hour = d.getHours().pad2()
-            val minuteRaw = d.getMinutes()
-            val minuteRounded = (minuteRaw / 5) * 5 // round down to nearest 5 for menu
-            val minute = minuteRounded.pad2()
-            dateInput.value = "$year-$month-$day"
+            val now = Date()
+            val (date, hour, minute) = with(now) {
+                val minuteRaw = getMinutes()
+                val minuteRounded = (minuteRaw / 5) * 5
+                Triple(
+                    "${getFullYear()}-${(getMonth() + 1).pad2()}-${getDate().pad2()}",
+                    getHours().pad2(),
+                    minuteRounded.pad2()
+                )
+            }
+            dateInput.value = date
             hourSelect.value = hour
             minuteSelect.value = minute
         }
@@ -258,20 +248,22 @@ private fun buildTodoListItem(todo: Todo, refresh: () -> Unit): HTMLLIElement {
         type = "number"
         min = "0"
         placeholder = "Duration (min)"
-        val existingDuration = todo.durationMillis
-        if (existingDuration != null) value = (existingDuration / 60000L).toString()
+        todo.durationMillis?.let { value = (it / 60000L).toString() }
     }
     val saveBtn = el<HTMLButtonElement>("button", "btn btnPrimary") {
         textContent = "Save schedule"
         onclick = {
-            val id = todo.id
-            if (id != null) {
-                val startAtMs = if (dateInput.value.trim().isNotEmpty() && hourSelect.value.trim().isNotEmpty() && minuteSelect.value.trim().isNotEmpty()) {
-                    val dtString = dateInput.value.trim() + "T" + hourSelect.value.trim() + ":" + minuteSelect.value.trim()
-                    Date(dtString).getTime().toLong()
-                } else null
-                val durationMs =
-                    durationInput.value.trim().let { if (it.isNotEmpty()) (it.toLongOrNull() ?: 0L) * 60000L else null }
+            todo.id?.let { id ->
+                val startAtMs = listOf(dateInput.value, hourSelect.value, minuteSelect.value)
+                    .takeIf { inputs -> inputs.all { it.trim().isNotEmpty() } }
+                    ?.let { "${dateInput.value.trim()}T${hourSelect.value.trim()}:${minuteSelect.value.trim()}" }
+                    ?.let { Date(it).getTime().toLong() }
+
+                val durationMs = durationInput.value.trim()
+                    .takeIf { it.isNotEmpty() }
+                    ?.toLongOrNull()
+                    ?.times(60000L)
+
                 patchSchedule(id, startAtMs, durationMs) { refresh() }
             }
         }
@@ -309,16 +301,18 @@ private fun buildTodoListItem(todo: Todo, refresh: () -> Unit): HTMLLIElement {
 private fun fetchTodos(done: (List<Todo>) -> Unit) {
     authedFetch(API_BASE)
         .then { resp ->
-            if (resp.status == 401.toShort()) {
-                // Re-authenticate
-                val root = (document.getElementById("app") ?: document.body!!) as HTMLElement
-                logout(root)
-                null
-            } else if (!resp.ok) throw Throwable("HTTP ${resp.status}") else resp.text()
+            when {
+                resp.status == 401.toShort() -> {
+                    val root = (document.getElementById("app") ?: document.body!!) as HTMLElement
+                    logout(root)
+                    null
+                }
+                !resp.ok -> throw Throwable("HTTP ${resp.status}")
+                else -> resp.text()
+            }
         }
-        .then { anyText ->
-            if (anyText != null) {
-                val text = anyText as String
+        .then { textOrNull ->
+            textOrNull?.then { text ->
                 done(Json.decodeFromString(text))
             }
         }
@@ -362,15 +356,4 @@ private fun patchSchedule(id: Long, startAtEpochMillis: Long?, durationMillis: L
 private fun clearProgressIntervals() {
     progressIntervals.forEach { window.clearInterval(it) }
     progressIntervals.clear()
-}
-
-private fun millisToLocalDateTimeString(ms: Long): String {
-    val d = Date(ms.toDouble())
-    fun Int.pad2() = if (this < 10) "0$this" else toString()
-    val year = d.getFullYear()
-    val month = (d.getMonth() + 1).pad2()
-    val day = d.getDate().pad2()
-    val hour = d.getHours().pad2()
-    val minute = d.getMinutes().pad2()
-    return "$year-$month-$day" + "T" + "$hour:$minute"
 }
