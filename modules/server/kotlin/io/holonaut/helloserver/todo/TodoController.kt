@@ -59,7 +59,7 @@ class TodoController(
     @ResponseStatus(HttpStatus.CREATED)
     fun create(@RequestBody req: CreateTodoRequest, @AuthenticationPrincipal principal: AppUserDetails): Todo {
         if (req.title.isBlank()) throw ResponseStatusException(HttpStatus.BAD_REQUEST, "title must not be blank")
-
+        
         val durationMillis = when {
             req.durationText != null -> parseDurationText(req.durationText)
                 ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid duration format. Use format like '2w 1d 3h'")
@@ -69,7 +69,7 @@ class TodoController(
             }
             else -> null
         }
-
+        
         val user = principal.user
         val entity = TodoEntity(title = req.title.trim(), completed = req.completed ?: false, createdBy = user)
         val teams = loadAndValidateTeams(req.teamIds, user)
@@ -87,7 +87,7 @@ class TodoController(
         @AuthenticationPrincipal principal: AppUserDetails
     ): Todo {
         if (req.title.isBlank()) throw ResponseStatusException(HttpStatus.BAD_REQUEST, "title must not be blank")
-
+        
         val durationMillis = when {
             req.durationText != null -> parseDurationText(req.durationText)
                 ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid duration format. Use format like '2w 1d 3h'")
@@ -97,7 +97,7 @@ class TodoController(
             }
             else -> null
         }
-
+        
         val user = principal.user
         val entity =
             repo.findById(id).orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Todo $id not found") }
@@ -129,7 +129,7 @@ class TodoController(
             entity.teams.addAll(loadAndValidateTeams(req.teamIds, user))
         }
         if (req.startAtEpochMillis != null) entity.startAt = Instant.ofEpochMilli(req.startAtEpochMillis)
-
+        
         if (req.durationText != null) {
             val durationMillis = parseDurationText(req.durationText)
                 ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid duration format. Use format like '2w 1d 3h'")
@@ -140,7 +140,7 @@ class TodoController(
             entity.durationText = null
             entity.durationMillis = req.durationMillis
         }
-
+        
         return repo.save(entity).toDto()
     }
 

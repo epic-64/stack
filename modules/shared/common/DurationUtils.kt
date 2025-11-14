@@ -67,7 +67,7 @@ fun formatDurationMillis(millis: Long?): String {
         parts.add("${minutes}m")
         remaining %= (60 * 1000)
     }
-
+    
     val seconds = remaining / 1000
     if (seconds > 0) {
         parts.add("${seconds}s")

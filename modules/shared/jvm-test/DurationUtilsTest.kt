@@ -39,7 +39,13 @@ class DurationUtilsSpec : StringSpec({
 
     "parseDurationText should parse combined units" {
         parseDurationText("2w 1d 3h") shouldBe (2 * WEEK + 1 * DAY + 3 * HOUR)
+        parseDurationText("1d 2h 30m") shouldBe (1 * DAY + 2 * HOUR + 30 * MINUTE)
+        parseDurationText("1d 1s") shouldBe (1 * DAY + 1 * SECOND)
+    }
+
+    "parseDurationText should handle unit overflow" {
         parseDurationText("1w 8d") shouldBe (2 * WEEK + 1 * DAY)
+        parseDurationText("25h") shouldBe (1 * DAY + 1 * HOUR)
     }
 
     "parseDurationText should handle no spaces" {
