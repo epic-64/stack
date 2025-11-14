@@ -33,8 +33,10 @@ kotlin {
         }
         val jvmMain by getting
         val jvmTest by getting {
+            kotlin.srcDirs("jvm-test")
             dependencies {
                 implementation(libs.kotestRunnerJunit5)
+                implementation(kotlin("reflect"))
             }
         }
         val jsMain by getting
@@ -42,6 +44,12 @@ kotlin {
     }
 }
 
+tasks.named<Test>("jvmTest") {
+    useJUnitPlatform()
+    systemProperty("kotest.framework.classpath.scanning.autoscan.disable", true)
+}
+
 tasks.withType<Test> {
     useJUnitPlatform()
+    systemProperty("kotest.framework.classpath.scanning.autoscan.disable", true)
 }
