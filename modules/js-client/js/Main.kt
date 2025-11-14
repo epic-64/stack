@@ -312,7 +312,9 @@ private fun fetchTodos(done: (List<Todo>) -> Unit) {
             }
         }
         .then { textOrNull ->
-            textOrNull?.then { text ->
+            if (textOrNull != null) {
+                val text = textOrNull as String
+                console.log("Received todos: $text")
                 done(Json.decodeFromString(text))
             }
         }
@@ -343,8 +345,9 @@ private fun deleteTodo(id: Long, done: () -> Unit) {
 }
 
 private fun patchSchedule(id: Long, startAtEpochMillis: Long?, durationMillis: Long?, done: () -> Unit) {
-    val body =
-        Json.encodeToString(UpdateTodoRequest(startAtEpochMillis = startAtEpochMillis, durationMillis = durationMillis))
+    val updateRequest = UpdateTodoRequest(startAtEpochMillis = startAtEpochMillis, durationMillis = durationMillis)
+    val body = Json.encodeToString(updateRequest)
+    console.log("PATCH /api/todos/$id with body: $body")
     val request = RequestInit(
         method = "PATCH",
         headers = json("Content-Type" to "application/json"),
