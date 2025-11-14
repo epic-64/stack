@@ -50,3 +50,4 @@ bin/
 ### Database ###
 /data/todo-db.mv.db
 /modules/server/data/todo-db.mv.db
+/modules/server/data/todo-db.trace.db

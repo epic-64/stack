@@ -14,6 +14,8 @@ class TodoEntity(
     var updatedAt: Instant? = null,
     // optional start time for duration-based todos
     var startAt: Instant? = null,
+    // optional duration in human-readable format like "2w 1d 3h"
+    var durationText: String? = null,
     // optional duration in milliseconds
     var durationMillis: Long? = null,
     @ManyToMany

@@ -3,6 +3,7 @@ package io.holonaut.helloserver.todo
 import io.holonaut.helloserver.security.AppUserDetails
 import io.holonaut.helloserver.team.TeamRepository
 import io.holonaut.shared.Todo
+import io.holonaut.shared.parseDurationText
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
@@ -42,6 +43,7 @@ class TodoController(
         val completed: Boolean? = null,
         val teamIds: List<Long>? = null,
         val startAtEpochMillis: Long? = null,
+        val durationText: String? = null,
         val durationMillis: Long? = null,
     )
     data class UpdateTodoRequest(
@@ -49,6 +51,7 @@ class TodoController(
         val completed: Boolean? = null,
         val teamIds: List<Long>? = null,
         val startAtEpochMillis: Long? = null,
+        val durationText: String? = null,
         val durationMillis: Long? = null,
     )
 
@@ -56,13 +59,24 @@ class TodoController(
     @ResponseStatus(HttpStatus.CREATED)
     fun create(@RequestBody req: CreateTodoRequest, @AuthenticationPrincipal principal: AppUserDetails): Todo {
         if (req.title.isBlank()) throw ResponseStatusException(HttpStatus.BAD_REQUEST, "title must not be blank")
-        if (req.durationMillis != null && req.durationMillis < 0) throw ResponseStatusException(HttpStatus.BAD_REQUEST, "durationMillis must be >= 0")
+
+        val durationMillis = when {
+            req.durationText != null -> parseDurationText(req.durationText)
+                ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid duration format. Use format like '2w 1d 3h'")
+            req.durationMillis != null -> {
+                if (req.durationMillis < 0) throw ResponseStatusException(HttpStatus.BAD_REQUEST, "durationMillis must be >= 0")
+                req.durationMillis
+            }
+            else -> null
+        }
+
         val user = principal.user
         val entity = TodoEntity(title = req.title.trim(), completed = req.completed ?: false, createdBy = user)
         val teams = loadAndValidateTeams(req.teamIds, user)
         entity.teams.addAll(teams)
         entity.startAt = req.startAtEpochMillis?.let { Instant.ofEpochMilli(it) }
-        entity.durationMillis = req.durationMillis
+        entity.durationText = req.durationText?.trim()
+        entity.durationMillis = durationMillis
         return repo.save(entity).toDto()
     }
 
@@ -73,7 +87,17 @@ class TodoController(
         @AuthenticationPrincipal principal: AppUserDetails
     ): Todo {
         if (req.title.isBlank()) throw ResponseStatusException(HttpStatus.BAD_REQUEST, "title must not be blank")
-        if (req.durationMillis != null && req.durationMillis < 0) throw ResponseStatusException(HttpStatus.BAD_REQUEST, "durationMillis must be >= 0")
+
+        val durationMillis = when {
+            req.durationText != null -> parseDurationText(req.durationText)
+                ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid duration format. Use format like '2w 1d 3h'")
+            req.durationMillis != null -> {
+                if (req.durationMillis < 0) throw ResponseStatusException(HttpStatus.BAD_REQUEST, "durationMillis must be >= 0")
+                req.durationMillis
+            }
+            else -> null
+        }
+
         val user = principal.user
         val entity =
             repo.findById(id).orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Todo $id not found") }
@@ -83,7 +107,8 @@ class TodoController(
         entity.teams.clear()
         entity.teams.addAll(loadAndValidateTeams(req.teamIds, user))
         entity.startAt = req.startAtEpochMillis?.let { Instant.ofEpochMilli(it) }
-        entity.durationMillis = req.durationMillis
+        entity.durationText = req.durationText?.trim()
+        entity.durationMillis = durationMillis
         return repo.save(entity).toDto()
     }
 
@@ -93,7 +118,6 @@ class TodoController(
         @RequestBody req: UpdateTodoRequest,
         @AuthenticationPrincipal principal: AppUserDetails
     ): Todo {
-        if (req.durationMillis != null && req.durationMillis < 0) throw ResponseStatusException(HttpStatus.BAD_REQUEST, "durationMillis must be >= 0")
         val user = principal.user
         val entity =
             repo.findById(id).orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Todo $id not found") }
@@ -105,7 +129,18 @@ class TodoController(
             entity.teams.addAll(loadAndValidateTeams(req.teamIds, user))
         }
         if (req.startAtEpochMillis != null) entity.startAt = Instant.ofEpochMilli(req.startAtEpochMillis)
-        if (req.durationMillis != null) entity.durationMillis = req.durationMillis
+
+        if (req.durationText != null) {
+            val durationMillis = parseDurationText(req.durationText)
+                ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid duration format. Use format like '2w 1d 3h'")
+            entity.durationText = req.durationText.trim()
+            entity.durationMillis = durationMillis
+        } else if (req.durationMillis != null) {
+            if (req.durationMillis < 0) throw ResponseStatusException(HttpStatus.BAD_REQUEST, "durationMillis must be >= 0")
+            entity.durationText = null
+            entity.durationMillis = req.durationMillis
+        }
+
         return repo.save(entity).toDto()
     }
 
@@ -151,6 +186,7 @@ private fun TodoEntity.toDto(): Todo = Todo(
     updatedAtEpochMillis = updatedAt?.toEpochMilli(),
     teamIds = teams.mapNotNull { it.id }.sorted(),
     startAtEpochMillis = startAt?.toEpochMilli(),
+    durationText = durationText,
     durationMillis = durationMillis,
     dueAtEpochMillis = if (startAt != null && durationMillis != null) startAt!!.toEpochMilli() + durationMillis!! else null,
 )
