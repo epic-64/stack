@@ -24,10 +24,24 @@ kotlin {
                 implementation(libs.kotlinxSerialization)
             }
         }
-        val commonTest by getting
+        val commonTest by getting {
+            kotlin.srcDirs("common-test")
+            dependencies {
+                implementation(libs.kotestAssertionsCore)
+                implementation(libs.kotestFrameworkEngine)
+            }
+        }
         val jvmMain by getting
-        val jvmTest by getting
+        val jvmTest by getting {
+            dependencies {
+                implementation(libs.kotestRunnerJunit5)
+            }
+        }
         val jsMain by getting
         val jsTest by getting
     }
+}
+
+tasks.withType<Test> {
+    useJUnitPlatform()
 }
