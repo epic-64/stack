@@ -5,45 +5,45 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.nulls.shouldBeNull
 
 class DurationUtilsSpec : StringSpec({
+    val SECOND = 1000L
+    val MINUTE = 60 * SECOND
+    val HOUR = 60 * MINUTE
+    val DAY = 24 * HOUR
+    val WEEK = 7 * DAY
+
     "parseDurationText should parse weeks" {
-        parseDurationText("1w") shouldBe 7 * 24 * 60 * 60 * 1000L
-        parseDurationText("2w") shouldBe 2 * 7 * 24 * 60 * 60 * 1000L
+        parseDurationText("1w") shouldBe WEEK
+        parseDurationText("2w") shouldBe 2 * WEEK
     }
 
     "parseDurationText should parse days" {
-        parseDurationText("1d") shouldBe 24 * 60 * 60 * 1000L
-        parseDurationText("3d") shouldBe 3 * 24 * 60 * 60 * 1000L
+        parseDurationText("1d") shouldBe DAY
+        parseDurationText("3d") shouldBe 3 * DAY
     }
 
     "parseDurationText should parse hours" {
-        parseDurationText("1h") shouldBe 60 * 60 * 1000L
-        parseDurationText("5h") shouldBe 5 * 60 * 60 * 1000L
+        parseDurationText("1h") shouldBe HOUR
+        parseDurationText("5h") shouldBe 5 * HOUR
     }
 
     "parseDurationText should parse minutes" {
-        parseDurationText("1m") shouldBe 60 * 1000L
-        parseDurationText("30m") shouldBe 30 * 60 * 1000L
+        parseDurationText("1m") shouldBe MINUTE
+        parseDurationText("30m") shouldBe 30 * MINUTE
     }
 
     "parseDurationText should parse seconds" {
-        parseDurationText("1s") shouldBe 1000L
-        parseDurationText("45s") shouldBe 45 * 1000L
+        parseDurationText("1s") shouldBe SECOND
+        parseDurationText("45s") shouldBe 45 * SECOND
+        parseDurationText("61s") shouldBe 61 * SECOND
     }
 
     "parseDurationText should parse combined units" {
-        val week = 7 * 24 * 60 * 60 * 1000L
-        val day = 24 * 60 * 60 * 1000L
-        val hour = 60 * 60 * 1000L
-
-        parseDurationText("2w 1d 3h") shouldBe (2 * week + 1 * day + 3 * hour)
+        parseDurationText("2w 1d 3h") shouldBe (2 * WEEK + 1 * DAY + 3 * HOUR)
+        parseDurationText("1w 8d") shouldBe (2 * WEEK + 1 * DAY)
     }
 
     "parseDurationText should handle no spaces" {
-        val week = 7 * 24 * 60 * 60 * 1000L
-        val day = 24 * 60 * 60 * 1000L
-        val hour = 60 * 60 * 1000L
-
-        parseDurationText("2w1d3h") shouldBe (2 * week + 1 * day + 3 * hour)
+        parseDurationText("2w1d3h") shouldBe (2 * WEEK + 1 * DAY + 3 * HOUR)
     }
 
     "parseDurationText should return null for invalid input" {
@@ -55,18 +55,15 @@ class DurationUtilsSpec : StringSpec({
     }
 
     "formatDurationMillis should format weeks and days" {
-        val millis = 2 * 7 * 24 * 60 * 60 * 1000L + 3 * 24 * 60 * 60 * 1000L
-        formatDurationMillis(millis) shouldBe "2w 3d"
+        formatDurationMillis(17 * DAY) shouldBe "2w 3d"
     }
 
     "formatDurationMillis should format hours and minutes" {
-        val millis = 5 * 60 * 60 * 1000L + 30 * 60 * 1000L
-        formatDurationMillis(millis) shouldBe "5h 30m"
+        formatDurationMillis(330 * MINUTE) shouldBe "5h 30m"
     }
 
     "formatDurationMillis should format 61 seconds as 1m 1s" {
-        val millis = 61 * 1000L
-        formatDurationMillis(millis) shouldBe "1m 1s"
+        formatDurationMillis(61 * SECOND) shouldBe "1m 1s"
     }
 
     "formatDurationMillis should return empty for null or zero" {
