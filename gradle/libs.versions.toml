@@ -10,6 +10,7 @@ kotlinxCoroutines = "1.10.2"
 springBoot = "3.4.3"
 springDependencyManagement = "1.1.7"
 kotest = "5.9.0"
+jjwt = "0.12.6"
 
 [libraries]
 kotlinGradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
@@ -25,6 +26,9 @@ kotestFrameworkEngine = { module = "io.kotest:kotest-framework-engine", version.
 kotestRunnerJunit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
 springBootStarterSecurity = { module = "org.springframework.boot:spring-boot-starter-security" }
 jacksonModuleKotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin" }
+jjwtApi = { module = "io.jsonwebtoken:jjwt-api", version.ref = "jjwt" }
+jjwtImpl = { module = "io.jsonwebtoken:jjwt-impl", version.ref = "jjwt" }
+jjwtJackson = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "jjwt" }
 
 # Libraries can be bundled together for easier import
 [bundles]

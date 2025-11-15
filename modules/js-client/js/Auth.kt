@@ -10,11 +10,12 @@ import org.w3c.fetch.RequestInit
 import org.w3c.fetch.Response
 import kotlin.js.Promise
 import kotlin.js.json
+import kotlin.js.JSON
 
 private const val AUTH_BASE = "http://localhost:8080/api/auth"
 
-// Basic auth credentials kept in memory + localStorage.
-private var basicAuthB64: String? = null
+// JWT token kept in memory + localStorage.
+private var jwtToken: String? = null
 private var lastOnAuthenticated: ((User) -> Unit)? = null
 
 // Entry point used by Main.kt to bootstrap auth and then the app.
@@ -22,7 +23,7 @@ fun initAuth(root: HTMLElement, onAuthenticated: (User) -> Unit) {
     lastOnAuthenticated = onAuthenticated
     val stored = window.localStorage.getItem("auth")
     if (stored != null && stored.isNotBlank()) {
-        basicAuthB64 = stored
+        jwtToken = stored
         fetchMe(
             ok = { user -> onAuthenticated(user) },
             unauthorized = { renderAuth(root, onAuthenticated) }
@@ -41,8 +42,8 @@ fun logout(root: HTMLElement) {
 // Public fetch wrapper (used by Main.kt) injecting Authorization header when present.
 fun authedFetch(url: String, init: RequestInit = RequestInit()): Promise<Response> {
     val headers = js("Object.assign({}, init.headers || {})")
-    val auth = basicAuthB64
-    if (auth != null) js("headers['Authorization'] = 'Basic ' + auth")
+    val token = jwtToken
+    if (token != null) js("headers['Authorization'] = 'Bearer ' + token")
     js("init.headers = headers")
     return window.fetch(url, init)
 }
@@ -129,16 +130,31 @@ private fun renderAuth(root: HTMLElement, onAuthenticated: (User) -> Unit) {
 }
 
 private fun doLogin(username: String, password: String, onAuthenticated: (User) -> Unit, onError: (String) -> Unit) {
-    basicAuthB64 = window.btoa("$username:$password")
-    window.localStorage.setItem("auth", basicAuthB64!!)
-    fetchMe(
-        ok = { user -> onAuthenticated(user) },
-        unauthorized = {
-            onError("Invalid credentials")
-            clearAuth()
-        },
-        failure = { onError(it.message ?: "Login failed") }
+    val body = Json.encodeToString(mapOf("username" to username, "password" to password))
+    val init = RequestInit(
+        method = "POST",
+        headers = json("Content-Type" to "application/json"),
+        body = body
     )
+    window.fetch("$AUTH_BASE/login", init)
+        .then { resp ->
+            if (resp.status == 200.toShort()) {
+                resp.text().then { text ->
+                    try {
+                        val loginResponse = JSON.parse<dynamic>(text)
+                        jwtToken = loginResponse.token as String
+                        window.localStorage.setItem("auth", jwtToken!!)
+                        val user = Json.decodeFromString<User>(JSON.stringify(loginResponse.user))
+                        onAuthenticated(user)
+                    } catch (e: dynamic) {
+                        onError("Login failed: ${e?.toString() ?: "decode error"}")
+                    }
+                }
+            } else {
+                resp.text().then { txt -> onError("Login failed: ${resp.status} $txt") }
+            }
+        }
+        .catch { err -> onError("Login failed: $err") }
 }
 
 private fun doRegister(username: String, password: String, onAuthenticated: (User) -> Unit, onError: (String) -> Unit) {
@@ -163,7 +179,7 @@ private fun fetchMe(ok: (User) -> Unit, unauthorized: () -> Unit, failure: (Thro
     authedFetch("$AUTH_BASE/me")
         .then { resp ->
             when {
-                resp.status == 401.toShort() -> { unauthorized(); null }
+                resp.status == 401.toShort() || resp.status == 403.toShort() -> { unauthorized(); null }
                 !resp.ok -> throw Throwable("/me failed: ${resp.status}")
                 else -> resp.text().then { text ->
                     try {
@@ -178,6 +194,6 @@ private fun fetchMe(ok: (User) -> Unit, unauthorized: () -> Unit, failure: (Thro
 }
 
 private fun clearAuth() {
-    basicAuthB64 = null
+    jwtToken = null
     window.localStorage.removeItem("auth")
 }
