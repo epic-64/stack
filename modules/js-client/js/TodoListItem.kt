@@ -97,13 +97,15 @@ fun buildTodoListItem(todo: Todo, refresh: () -> Unit): HTMLLIElement {
             return
         }
 
-        val result = parseUserDateTimeInput(input)
-        if (result.success && result.isoDateWithTz != null) {
-            isoDisplayContainer.className = "isoDateDisplay valid"
-            isoDisplayText.textContent = result.isoDateWithTz
-        } else {
-            isoDisplayContainer.className = "isoDateDisplay invalid"
-            isoDisplayText.textContent = result.error ?: "Invalid date"
+        when (val result = parseUserDateTimeInput(input)) {
+            is DateParseResult.Success -> {
+                isoDisplayContainer.className = "isoDateDisplay valid"
+                isoDisplayText.textContent = result.isoDateWithTz
+            }
+            is DateParseResult.Error -> {
+                isoDisplayContainer.className = "isoDateDisplay invalid"
+                isoDisplayText.textContent = result.message
+            }
         }
     }
 
@@ -144,11 +146,9 @@ fun buildTodoListItem(todo: Todo, refresh: () -> Unit): HTMLLIElement {
         onclick = {
             todo.id?.let { id ->
                 val startAtMs = if (dateTimeInput.value.trim().isNotEmpty()) {
-                    val parseResult = parseUserDateTimeInput(dateTimeInput.value)
-                    if (parseResult.success && parseResult.isoDateWithTz != null) {
-                        Date(parseResult.isoDateWithTz).getTime().toLong()
-                    } else {
-                        null
+                    when (val parseResult = parseUserDateTimeInput(dateTimeInput.value)) {
+                        is DateParseResult.Success -> Date(parseResult.isoDateWithTz).getTime().toLong()
+                        is DateParseResult.Error -> null
                     }
                 } else {
                     null
