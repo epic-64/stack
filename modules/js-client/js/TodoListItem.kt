@@ -1,5 +1,4 @@
 import io.holonaut.shared.Todo
-import kotlinx.browser.document
 import kotlinx.browser.window
 import org.w3c.dom.*
 import kotlin.js.Date
@@ -74,60 +73,67 @@ fun buildTodoListItem(todo: Todo, refresh: () -> Unit): HTMLLIElement {
 
     // Scheduling edit UI (start + duration) inside expanded actions
     val scheduleWrapper = el<HTMLDivElement>("div", "scheduleWrapper")
-    val scheduleRow = el<HTMLDivElement>("div", "scheduleRow")
     
-    // Date and time inputs
-    val dateInput = el<HTMLInputElement>("input", "textInput scheduleDateInput") {
-        type = "date"
-        placeholder = "Date"
+    // First row: Date/time text input with ISO date display
+    val dateTimeRow = el<HTMLDivElement>("div", "scheduleRow")
+    val dateTimeInput = el<HTMLInputElement>("input", "textInput scheduleDateTimeInput") {
+        type = "text"
+        placeholder = "Date and time (e.g., 2025-12-25, 2025-12-25T14:30, or any ISO format)"
         todo.startAtEpochMillis?.let {
-            value = parseMillisToDateTime(it).date
+            value = Date(it.toDouble()).toISOString()
         }
     }
-    val hourSelect = el<HTMLSelectElement>("select", "textInput scheduleHourSelect") {
-        (0..23).forEach { h ->
-            val opt = document.createElement("option") as HTMLOptionElement
-            opt.value = h.pad2()
-            opt.textContent = h.pad2()
-            appendChild(opt)
-        }
-        value = todo.startAtEpochMillis?.let { parseMillisToDateTime(it).hour } ?: ""
+    val isoDisplayContainer = el<HTMLDivElement>("div", "isoDateDisplay")
+    val isoDisplayText = el<HTMLSpanElement>("span", "isoDateText") {
+        textContent = ""
     }
-    val minuteSelect = el<HTMLSelectElement>("select", "textInput scheduleMinuteSelect") {
-        (0..55 step 5).forEach { m ->
-            val opt = document.createElement("option") as HTMLOptionElement
-            opt.value = m.pad2()
-            opt.textContent = m.pad2()
-            appendChild(opt)
+    isoDisplayContainer.appendChild(isoDisplayText)
+
+    fun updateIsoDisplay() {
+        val input = dateTimeInput.value
+        if (input.trim().isEmpty()) {
+            isoDisplayContainer.className = "isoDateDisplay"
+            isoDisplayText.textContent = ""
+            return
         }
-        value = todo.startAtEpochMillis?.let { parseMillisToDateTime(it).minute } ?: ""
+
+        val result = parseUserDateTimeInput(input)
+        if (result.success && result.isoDateWithTz != null) {
+            isoDisplayContainer.className = "isoDateDisplay valid"
+            isoDisplayText.textContent = result.isoDateWithTz
+        } else {
+            isoDisplayContainer.className = "isoDateDisplay invalid"
+            isoDisplayText.textContent = result.error ?: "Invalid date"
+        }
     }
+
+    dateTimeInput.oninput = { updateIsoDisplay() }
+
     val nowBtn = el<HTMLButtonElement>("button", "btn btnSecondary") {
         textContent = "Now"
         onclick = {
-            val now = Date()
-            val (date, hour, minute) = with(now) {
-                val minuteRaw = getMinutes()
-                val minuteRounded = (minuteRaw / 5) * 5
-                Triple(
-                    "${getFullYear()}-${(getMonth() + 1).pad2()}-${getDate().pad2()}",
-                    getHours().pad2(),
-                    minuteRounded.pad2()
-                )
-            }
-            dateInput.value = date
-            hourSelect.value = hour
-            minuteSelect.value = minute
+            dateTimeInput.value = Date().toISOString()
+            updateIsoDisplay()
         }
     }
     val clearBtn = el<HTMLButtonElement>("button", "btn btnSecondary") {
         textContent = "Clear"
         onclick = {
-            dateInput.value = ""
-            hourSelect.value = ""
-            minuteSelect.value = ""
+            dateTimeInput.value = ""
+            updateIsoDisplay()
         }
     }
+    
+    dateTimeRow.appendChild(dateTimeInput)
+    dateTimeRow.appendChild(nowBtn)
+    dateTimeRow.appendChild(clearBtn)
+    dateTimeRow.appendChild(isoDisplayContainer)
+
+    // Initialize ISO display if there's an existing date
+    updateIsoDisplay()
+
+    // Second row: Duration input
+    val durationRow = el<HTMLDivElement>("div", "scheduleRow")
     val durationInput = el<HTMLInputElement>("input", "textInput scheduleDurationInput") {
         type = "text"
         placeholder = "Duration (e.g., 2w 1d 3h)"
@@ -137,10 +143,16 @@ fun buildTodoListItem(todo: Todo, refresh: () -> Unit): HTMLLIElement {
         textContent = "Save schedule"
         onclick = {
             todo.id?.let { id ->
-                val startAtMs = listOf(dateInput.value, hourSelect.value, minuteSelect.value)
-                    .takeIf { inputs -> inputs.all { it.trim().isNotEmpty() } }
-                    ?.let { "${dateInput.value.trim()}T${hourSelect.value.trim()}:${minuteSelect.value.trim()}" }
-                    ?.let { Date(it).getTime().toLong() }
+                val startAtMs = if (dateTimeInput.value.trim().isNotEmpty()) {
+                    val parseResult = parseUserDateTimeInput(dateTimeInput.value)
+                    if (parseResult.success && parseResult.isoDateWithTz != null) {
+                        Date(parseResult.isoDateWithTz).getTime().toLong()
+                    } else {
+                        null
+                    }
+                } else {
+                    null
+                }
 
                 val durationText = durationInput.value.trim()
                     .takeIf { it.isNotEmpty() }
@@ -150,14 +162,12 @@ fun buildTodoListItem(todo: Todo, refresh: () -> Unit): HTMLLIElement {
         }
     }
     
-    scheduleRow.appendChild(dateInput)
-    scheduleRow.appendChild(hourSelect)
-    scheduleRow.appendChild(minuteSelect)
-    scheduleRow.appendChild(nowBtn)
-    scheduleRow.appendChild(clearBtn)
-    scheduleRow.appendChild(durationInput)
-    scheduleRow.appendChild(saveBtn)
-    scheduleWrapper.appendChild(scheduleRow)
+    durationRow.appendChild(durationInput)
+    durationRow.appendChild(saveBtn)
+    
+    scheduleWrapper.appendChild(dateTimeRow)
+    scheduleWrapper.appendChild(durationRow)
+
     actions.appendChild(toggleBtn)
     actions.appendChild(del)
     actions.appendChild(scheduleWrapper)

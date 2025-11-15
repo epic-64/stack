@@ -80,11 +80,13 @@ body {
 
 .textInput {
   flex: 1 1 auto;
+  height: 44px;
   padding: 10px 12px;
   border-radius: 10px;
   color: var(--text);
   background: #0f1216;
   border: 1px solid rgba(148,163,184,0.2);
+  font: inherit;
 }
 .textInput::placeholder {
   color: var(--muted);
@@ -202,6 +204,7 @@ body {
   margin-top: 10px;
   gap: 8px;
   flex-wrap: wrap;
+  max-width: 100%;
 }
 .todoItem.expanded .todoActions {
   display: flex;
@@ -317,13 +320,59 @@ body {
   .todoList::-webkit-scrollbar {
     width: 8px;
   }
+  .scheduleWrapper {
+    width: 100%;
+    overflow: hidden;
+  }
+  .scheduleRow {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+  .scheduleWrapper .btn {
+    flex: 0 0 calc(50% - 4px);
+    max-width: calc(50% - 4px);
+  }
+  .scheduleHourSelect, .scheduleMinuteSelect {
+    flex: 0 0 calc((100% - 16px) / 3);
+    width: calc((100% - 16px) / 3);
+    min-width: 0;
+  }
+  .scheduleDateInput {
+    flex: 0 0 calc((100% - 16px) / 3);
+    width: calc((100% - 16px) / 3);
+    min-width: 0;
+  }
+  .scheduleDurationInput {
+    flex: 1 1 100%;
+    width: 100%;
+    min-width: 0;
+  }
 }
 
 .progressContainer { margin-top:4px; width:100%; background:#e0e0e0; height:6px; border-radius:3px; overflow:hidden; }
 .progressFill { height:100%; background:#4caf50; width:0; transition:width .3s ease; }
 
 .todoHeaderRow { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
-.scheduleWrapper { display:flex; flex-direction:column; gap:6px; flex:1 1 100%; }
-.scheduleRow { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
-.scheduleStartInput { max-width:220px; flex:0 0 auto; }
-.scheduleDurationInput { max-width:140px; flex:0 0 auto; }
+.scheduleWrapper { display:flex; flex-direction:column; gap:10px; width:100%; }
+.scheduleRow { display:flex; flex-wrap:wrap; gap:8px; width:100%; align-items:flex-start; }
+/* Desktop / base sizing */
+.scheduleDateTimeInput { flex:1 1 280px; min-width:200px; }
+.scheduleRow:first-child .btn { flex:0 0 110px; }
+.isoDateDisplay { flex:1 1 280px; min-width:200px; padding:8px 12px; border-radius:10px; background:#0f1216; border:1px solid rgba(148,163,184,0.2); color:var(--muted); font-size:0.85em; font-family:monospace; word-break:break-all; min-height:44px; display:flex; align-items:center; }
+.isoDateDisplay.valid { border-color:color-mix(in lab, var(--ok) 24%, #000 4%); background:color-mix(in lab, var(--ok) 8%, transparent); }
+.isoDateDisplay.invalid { border-color:color-mix(in lab, var(--err) 24%, #000 4%); background:color-mix(in lab, var(--err) 8%, transparent); color:var(--err); }
+.isoDateText { }
+/* Duration row */
+.scheduleDurationInput { flex:1 1 260px; min-width:200px; }
+.scheduleRow:last-child .btn { flex:0 0 140px; }
+/* Mobile: stack inputs and buttons */
+@media (max-width: 600px) {
+  .scheduleRow:first-child { display:flex; flex-direction:column; gap:8px; }
+  .scheduleRow:first-child .scheduleDateTimeInput,
+  .scheduleRow:first-child .isoDateDisplay { width:100%; flex:1 1 100%; min-width:auto; }
+  .scheduleRow:first-child .btn { width:100%; flex:0 0 auto; }
+  /* Duration row: stack inputs and button if cramped */
+  .scheduleRow:last-child { display:flex; flex-direction:column; gap:8px; }
+  .scheduleRow:last-child .scheduleDurationInput { width:100%; flex:1 1 100%; }
+  .scheduleRow:last-child .btn { width:100%; flex:0 0 auto; }
+}

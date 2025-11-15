@@ -1,16 +1,24 @@
 import kotlin.js.Date
 
-fun Int.pad2() = if (this < 10) "0$this" else toString()
+data class ParsedDateTimeResult(val success: Boolean, val isoDateWithTz: String? = null, val error: String? = null)
 
-data class ParsedDateTime(val date: String, val hour: String, val minute: String)
+fun parseUserDateTimeInput(input: String): ParsedDateTimeResult {
+    val trimmed = input.trim()
+    if (trimmed.isEmpty()) {
+        return ParsedDateTimeResult(success = false, error = "Input is empty")
+    }
 
-fun parseMillisToDateTime(ms: Long): ParsedDateTime {
-    val d = Date(ms.toDouble())
-    val year = d.getFullYear()
-    val month = (d.getMonth() + 1).pad2()
-    val day = d.getDate().pad2()
-    val hour = d.getHours().pad2()
-    val minute = d.getMinutes().pad2()
-    return ParsedDateTime("$year-$month-$day", hour, minute)
+    return try {
+        val date = Date(trimmed)
+        // Check if the date is valid (Date constructor returns Invalid Date if parsing fails)
+        if (date.getTime().isNaN()) {
+            ParsedDateTimeResult(success = false, error = "Invalid date format")
+        } else {
+            val isoString = date.toISOString()
+            ParsedDateTimeResult(success = true, isoDateWithTz = isoString)
+        }
+    } catch (e: Exception) {
+        ParsedDateTimeResult(success = false, error = "Failed to parse: ${e.message}")
+    }
 }
 
