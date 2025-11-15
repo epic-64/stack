@@ -12,6 +12,8 @@ fun main() {
 }
 
 fun renderApp(root: HTMLElement, user: User) {
+    console.log("EEEE")
+
     root.innerHTML = ""
 
     val headerRow = el<HTMLDivElement>("div", "todoHeaderRow")

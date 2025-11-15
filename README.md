@@ -3,31 +3,30 @@
 ## Compile and run server
 Remember to rerun this every time server code changes.
 ```bash
-./gradlew startServer
+./gradlew :server:bootRun
 ```
 
 ## Build JS (dev)
 Builds the JS client once. Run this after making changes:
 ```bash
-./gradlew devJs
+./gradlew :js-client:jsBrowserDevelopmentWebpack
 ```
 
 ## Watch JS (auto-rebuild)
 Watches for changes and automatically rebuilds:
 ```bash
-./gradlew watchJs --continuous
+./gradlew :js-client:jsBrowserDevelopmentWebpack --continuous
 ```
-Note: You still need to manually refresh the browser after each rebuild.
 
 ## Fix JS
 If changes in Kotlin code do not show up in JS (due to Gradle caching), run this:
 ```bash
-./gradlew fixJs --rerun-tasks
+./gradlew :js-client:clean :js-client:jsBrowserDevelopmentWebpack --rerun-tasks
 ```
 
 ## Build JS (prod)
 ```bash
-./gradlew prodJs
+./gradlew js-client:jsBrowserProductionWebpack
 ```
 
 ## Start frontend
