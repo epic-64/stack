@@ -7,14 +7,22 @@ Remember to rerun this every time server code changes.
 ```
 
 ## Build JS (dev)
+Builds the JS client once. Run this after making changes:
 ```bash
-./gradlew devJs --continuous
+./gradlew devJs
 ```
 
-## Fix JS
-If changes in Kotlin code do not show up in JS, run this.
+## Watch JS (auto-rebuild)
+Watches for changes and automatically rebuilds:
 ```bash
-./gradlew :js-client:clean :js-client:jsBrowserDevelopmentWebpack --rerun-tasks
+./gradlew watchJs --continuous
+```
+Note: You still need to manually refresh the browser after each rebuild.
+
+## Fix JS
+If changes in Kotlin code do not show up in JS (due to Gradle caching), run this:
+```bash
+./gradlew fixJs --rerun-tasks
 ```
 
 ## Build JS (prod)
