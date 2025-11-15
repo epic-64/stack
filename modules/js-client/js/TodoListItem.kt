@@ -79,9 +79,7 @@ fun buildTodoListItem(todo: Todo, refresh: () -> Unit): HTMLLIElement {
     val dateTimeInput = el<HTMLInputElement>("input", "textInput scheduleDateTimeInput") {
         type = "text"
         placeholder = "Date and time (e.g., now, yesterday, tomorrow, 2025-12-25, 2025-12-25 15:00)"
-        value = todo.startAtEpochMillis?.let {
-            formatDateWithTimezone(Date(it.toDouble()))
-        } ?: "now"
+        value = todo.startAtEpochMillis?.let { formatDateWithTimezone(Date(it.toDouble())) } ?: "now"
     }
     val isoDisplayContainer = el<HTMLDivElement>("div", "isoDateDisplay")
     val isoDisplayText = el<HTMLSpanElement>("span", "isoDateText") {
@@ -139,7 +137,7 @@ fun buildTodoListItem(todo: Todo, refresh: () -> Unit): HTMLLIElement {
     val durationInput = el<HTMLInputElement>("input", "textInput scheduleDurationInput") {
         type = "text"
         placeholder = "Duration (e.g., 2w 1d 3h)"
-        todo.durationText?.let { value = it }
+        value = todo.durationText.orEmpty()
     }
     val saveBtn = el<HTMLButtonElement>("button", "btn btnPrimary") {
         textContent = "Save schedule"
